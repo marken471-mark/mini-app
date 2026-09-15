@@ -1,743 +1,694 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Slast-Gram | Kumpulkan Koin & Dapat Uang</title>
-<script async src="https://cdn.adsgram.ai/sdk.js"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-:root{
-  --bg:#0f172a; --surface:#1e293b; --card:#334155;
-  --accent:#f59e0b; --accent-soft:rgba(245,158,11,.15);
-  --success:#10b981; --danger:#ef4444; --text:#f8fafc;
-  --muted:#94a3b8; --border:rgba(148,163,184,.15);
-  --shadow:0 4px 20px rgba(0,0,0,.35);
-  --primary-gradient:linear-gradient(135deg,#f59e0b,#f97316);
-  --glow:0 0 15px rgba(245,158,11,.4);
-}
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
-body{background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:85px}
-
-.header{background:linear-gradient(135deg,#1e293b,#0f172a);padding:20px 16px;border-bottom:1px solid var(--border)}
-.logo-center{text-align:center;margin-bottom:16px}
-.logo-text{font-size:26px;font-weight:800;background:var(--primary-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.user-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.avatar{width:48px;height:48px;border-radius:50%;background:var(--primary-gradient);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;box-shadow:var(--glow)}
-.user-info h2{font-size:17px;font-weight:700}
-.user-info p{font-size:12px;color:var(--muted);margin-top:2px}
-.balance-card{background:linear-gradient(135deg,#2b394f,#1e293b);border-radius:18px;padding:18px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow);border:1px solid var(--accent-soft);margin-bottom:12px}
-.balance-label{font-size:12px;color:var(--muted)}
-.balance-value{font-size:34px;font-weight:800;color:var(--accent);text-shadow:0 0 10px rgba(245,158,11,.3)}
-.progress-bar{height:10px;background:var(--card);border-radius:5px;overflow:hidden}
-.progress-fill{height:100%;background:var(--primary-gradient);border-radius:5px;transition:width .6s ease}
-.container{padding:16px}
-
-.streak-box{display:flex;justify-content:space-between;gap:6px;margin:16px 0}
-.day{flex:1;text-align:center;padding:12px 6px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:11px;transition:all .3s ease}
-.day.today{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--glow);transform:scale(1.05)}
-.day.checked{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
-.day.future{opacity:.35}
-.checkin-btn{width:100%;padding:16px;border-radius:14px;border:none;background:var(--primary-gradient);color:#fff;font-weight:700;font-size:16px;cursor:pointer;margin:14px 0;transition:all .3s ease;box-shadow:0 4px 15px rgba(245,158,11,.25)}
-.checkin-btn:active{transform:scale(0.97)}
-.checkin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-
-.section-title{font-size:19px;font-weight:700;margin:28px 0 14px}
-.grid-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:20px 0}
-.action-card{background:var(--surface);border-radius:16px;padding:20px 14px;text-align:center;border:1px solid var(--border);cursor:pointer;transition:all .3s ease}
-.action-card:hover{transform:translateY(-4px);border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--glow)}
-.action-icon{font-size:30px;margin-bottom:8px}
-.action-title{font-weight:600;font-size:15px;margin-bottom:4px}
-.action-reward{font-size:13px;color:var(--accent);font-weight:700}
-
-.task-list{display:flex;flex-direction:column;gap:12px}
-.task-item{background:var(--surface);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;border:1px solid var(--border)}
-.task-check{width:28px;height:28px;border-radius:50%;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;transition:all .3s}
-.task-check.done{background:var(--success);border-color:var(--success);color:#fff;box-shadow:0 0 8px rgba(16,185,129,.4)}
-
-.leaderboard{background:var(--surface);border-radius:16px;overflow:hidden;border:1px solid var(--border)}
-.leader-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border)}
-.leader-item:last-child{border-bottom:none}
-.leader-item.me{background:rgba(245,158,11,.12);border-left:3px solid var(--accent)}
-.leader-rank{width:32px;text-align:center;font-weight:700;font-size:15px;color:var(--muted)}
-.leader-rank.top1{color:#f59e0b;font-size:18px}
-.leader-rank.top2{color:#cbd5e1}
-.leader-rank.top3{color:#d97706}
-.leader-name{flex:1;font-size:15px;font-weight:600}
-.leader-points{font-weight:700;color:var(--accent);font-size:14px}
-
-.withdraw-card{background:var(--surface);border-radius:18px;padding:24px;border:1px solid var(--border)}
-.conv-note{background:rgba(16,185,129,.1);border-radius:12px;padding:14px;margin:14px 0;font-size:14px;color:var(--success);text-align:center;line-height:1.7;border:1px solid rgba(16,185,129,.2)}
-.conv-note strong{color:#fff}
-.conv-note .warn{color:var(--accent)}
-.withdraw-form{display:flex;flex-direction:column;gap:14px;margin:20px 0}
-.form-label{font-size:14px;color:var(--muted);font-weight:500}
-.form-input{background:var(--card);border:2px solid transparent;border-radius:12px;padding:14px 16px;color:var(--text);font-size:16px;width:100%;transition:border-color .2s, box-shadow .2s}
-.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.2)}
-.form-input.error{border-color:var(--danger);box-shadow:0 0 0 3px rgba(239,68,68,.2)}
-.withdraw-btn{width:100%;padding:16px;border-radius:14px;border:none;font-weight:700;font-size:16px;cursor:pointer;background:var(--primary-gradient);color:#fff;transition:all .3s ease;box-shadow:0 4px 15px rgba(245,158,11,.25)}
-.withdraw-btn:active{transform:scale(0.97)}
-.withdraw-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;background:var(--card);color:var(--muted)}
-.history-item{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--border)}
-.history-status{font-size:12px;padding:6px 12px;border-radius:20px;font-weight:600}
-.history-status.pending{background:rgba(245,158,11,.15);color:var(--accent)}
-.history-status.paid{background:rgba(16,185,129,.2);color:var(--success)}
-.history-status.cancelled{background:rgba(239,68,68,.15);color:var(--danger)}
-
-.ref-card{background:var(--surface);border-radius:18px;padding:24px;border:1px solid var(--border)}
-.ref-bonus{background:var(--accent-soft);border-radius:14px;padding:18px;margin-bottom:20px;text-align:center;border:1px solid rgba(245,158,11,.2)}
-.ref-bonus h3{font-size:24px;color:var(--accent);margin-bottom:6px}
-.ref-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
-.ref-stat{text-align:center;background:var(--card);border-radius:12px;padding:16px}
-.ref-stat-val{font-size:24px;font-weight:800;color:var(--accent)}
-.ref-link-box{background:var(--card);padding:14px;border-radius:12px;font-size:13px;word-break:break-all;margin:14px 0;font-family:monospace;border:1px dashed var(--border)}
-
-.game-input{width:100%;padding:16px;border-radius:12px;border:2px solid var(--border);background:var(--card);color:#fff;font-size:20px;text-align:center;margin:14px 0}
-.game-input:focus{outline:none;border-color:var(--accent)}
-.game-btn{padding:14px 28px;border-radius:12px;border:none;background:var(--primary-gradient);color:#fff;font-weight:700;cursor:pointer;margin:8px;transition:all .2s}
-.game-btn:active{transform:scale(0.95)}
-.game-btn:disabled{opacity:.5;cursor:not-allowed}
-.game-btn.secondary{background:var(--card);border:1px solid var(--border)}
-.game-result{margin-top:16px;font-weight:600;font-size:17px;padding:14px;border-radius:12px}
-.game-result.win{color:var(--success);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)}
-.game-result.lose{color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2)}
-.guess-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
-.guess-btn{padding:20px 12px;border-radius:12px;border:2px solid var(--border);background:var(--card);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:all .2s}
-.guess-btn:hover{border-color:var(--accent);transform:scale(1.05)}
-.guess-btn.correct{background:var(--success);border-color:var(--success)}
-.guess-btn.wrong{background:var(--danger);border-color:var(--danger);opacity:.7}
-
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:10px 0;z-index:100}
-.nav-tab{flex:1;text-align:center;padding:8px 4px;cursor:pointer;transition:all .2s;opacity:.7}
-.nav-tab.active{color:var(--accent);opacity:1;transform:translateY(-2px)}
-.nav-icon{font-size:22px;margin-bottom:2px}
-.nav-label{font-size:11px}
-
-.screen{display:none}
-.screen.active{display:block}
-
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
-.modal-overlay.show{display:flex}
-.modal{background:var(--surface);border-radius:20px;padding:28px;max-width:360px;width:100%;text-align:center;border:1px solid var(--border)}
-.modal-title{font-size:20px;font-weight:700;margin-bottom:8px}
-.modal-desc{font-size:14px;color:var(--muted);margin-bottom:24px}
-.modal-btn{width:100%;padding:16px;border-radius:14px;border:none;font-weight:700;font-size:16px;cursor:pointer;transition:all .2s}
-.modal-btn.primary{background:var(--primary-gradient);color:#fff;margin-bottom:12px}
-.modal-btn.secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
-
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--success);color:#fff;padding:14px 24px;border-radius:14px;font-weight:600;z-index:300;transition:transform .3s ease;box-shadow:var(--shadow);max-width:90%}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.toast.error{background:var(--danger)}
-.toast.warning{background:var(--accent)}
-</style>
-</head>
-<body>
-
-<div id="toast" class="toast"></div>
-
-<div id="screen-home" class="screen active">
-  <div class="header">
-    <div class="logo-center"><span class="logo-text">Slast-Gram</span></div>
-    <div class="user-row">
-      <div class="avatar" id="userAvatar">U</div>
-      <div class="user-info">
-        <h2 id="userName">Pengguna</h2>
-        <p>Level <span id="userLevel">1</span> • 🔥 <span id="streakDays">0</span> hari berturut-turut</p>
-      </div>
-    </div>
-    <div class="balance-card">
-      <div>
-        <div class="balance-label">💰 Koin Anda</div>
-        <div class="balance-value" id="userPoints">0</div>
-      </div>
-      <div style="text-align:right">
-        <div class="balance-label">⭐ XP</div>
-        <div style="font-weight:700;font-size:14px" id="xpText">0 / 100</div>
-        <div class="progress-bar" style="width:110px;margin-top:6px">
-          <div class="progress-fill" id="xpBar" style="width:0%"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="container">
-    <h3 class="section-title">📅 Cek-in Harian</h3>
-    <div class="streak-box" id="streakContainer"></div>
-    <button id="checkinBtn" class="checkin-btn" onclick="doCheckin()">✅ Klaim Cek-in Harian (+5 Koin)</button>
-
-    <h3 class="section-title">⚡ Aksi Cepat — Klaim Koin</h3>
-    <div class="grid-actions">
-      <div class="action-card" onclick="openSpinModal()">
-        <div class="action-icon">🎡</div>
-        <div class="action-title">Putar Roda</div>
-        <div class="action-reward">+10–100 Koin</div>
-      </div>
-      <div class="action-card" onclick="openBoxModal()">
-        <div class="action-icon">🎁</div>
-        <div class="action-title">Kotak Misteri</div>
-        <div class="action-reward">+25–200 Koin</div>
-      </div>
-      <div class="action-card" onclick="watchRewardAd()">
-        <div class="action-icon">🎬</div>
-        <div class="action-title">Tonton Iklan</div>
-        <div class="action-reward">+25–50 Koin</div>
-      </div>
-      <div class="action-card" onclick="openGuessModal()">
-        <div class="action-icon">🔢</div>
-        <div class="action-title">Tebak Angka</div>
-        <div class="action-reward">+30 Koin</div>
-      </div>
-      <div class="action-card" onclick="openColorModal()">
-        <div class="action-icon">🎨</div>
-        <div class="action-title">Tebak Warna</div>
-        <div class="action-reward">+35 Koin</div>
-      </div>
-      <div class="action-card" onclick="switchScreen('referral')">
-        <div class="action-icon">👥</div>
-        <div class="action-title">Undang Teman</div>
-        <div class="action-reward">+50 Koin</div>
-      </div>
-    </div>
-
-    <h3 class="section-title">📋 Tugas Harian</h3>
-    <div class="task-list">
-      <div class="task-item">
-        <div class="task-check" id="taskCheckin">○</div>
-        <span style="flex:1">Cek-in harian</span>
-        <span class="action-reward">+5 💎</span>
-      </div>
-      <div class="task-item" onclick="watchRewardAd()">
-        <div class="task-check" id="taskAd">○</div>
-        <span style="flex:1">Tonton 1 iklan</span>
-        <span class="action-reward">+25 💎</span>
-      </div>
-      <div class="task-item" onclick="openGuessModal()">
-        <div class="task-check" id="taskGame">○</div>
-        <span style="flex:1">Main 1 permainan</span>
-        <span class="action-reward">+15 💎</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="screen-rank" class="screen">
-  <div class="header">
-    <div class="logo-center"><span class="logo-text">Slast-Gram</span></div>
-    <h2 style="font-size:20px;font-weight:700;margin-top:10px">🏆 Peringkat Teratas</h2>
-  </div>
-  <div class="container">
-    <div class="leaderboard" id="leaderboardList"></div>
-  </div>
-</div>
-
-<div id="screen-withdraw" class="screen">
-  <div class="header">
-    <div class="logo-center"><span class="logo-text">Slast-Gram</span></div>
-    <h2 style="font-size:20px;font-weight:700;margin-top:10px">💰 Penarikan Saldo</h2>
-  </div>
-  <div class="container">
-    <div class="withdraw-card">
-      <div style="text-align:center;margin-bottom:20px">
-        <div class="balance-value" id="wdBalance" style="font-size:40px">0</div>
-        <div class="conv-note">
-          💵 Konversi: <strong>1.000 Koin = Rp 1.000</strong><br>
-          🔹 Minimum: <strong class="warn">5.000 Koin = Rp 5.000</strong><br>
-          🔹 Maks/hari: <strong>100.000 Koin = Rp 100.000</strong>
-        </div>
-      </div>
-      
-      <div class="withdraw-form">
-        <label class="form-label">Jumlah Koin *</label>
-        <input type="number" id="wdAmount" class="form-input" placeholder="Min. 5.000" min="5000" max="100000" oninput="calcWithdraw()">
-        
-        <label class="form-label">Metode Pembayaran *</label>
-        <select id="wdMethod" class="form-input">
-          <option value="">Pilih...</option>
-          <option value="dana">💵 DANA</option>
-          <option value="shopeepay">🛒 ShopeePay</option>
-          <option value="gopay">🚗 GoPay</option>
-          <option value="ovo">💳 OVO</option>
-          <option value="bank">🏦 Transfer Bank</option>
-        </select>
-        
-        <label class="form-label">Nomor Tujuan *</label>
-        <input type="text" id="wdNumber" class="form-input" placeholder="Contoh: 08123456789">
-        
-        <label class="form-label">Nama Pemilik Akun *</label>
-        <input type="text" id="wdName" class="form-input" placeholder="Nama sesuai akun">
-        
-        <div style="background:var(--card);padding:16px;border-radius:12px;margin:10px 0">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-            <span style="color:var(--muted)">Jumlah Koin</span>
-            <span id="detailCoin">0 Koin</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:18px;border-top:1px dashed var(--border);padding-top:10px;margin-top:4px">
-            <span>Diterima</span>
-            <span id="wdEstimate" style="color:var(--success)">Rp 0</span>
-          </div>
-        </div>
-        
-        <button id="wdSubmit" class="withdraw-btn" onclick="submitWithdraw()">✅ Ajukan Penarikan</button>
-      </div>
-    </div>
-
-    <h3 class="section-title">📋 Riwayat Penarikan</h3>
-    <div id="wdHistoryList">
-      <p style="text-align:center;color:var(--muted);padding:30px">Belum ada riwayat</p>
-    </div>
-  </div>
-</div>
-
-<div id="screen-referral" class="screen">
-  <div class="header">
-    <div class="logo-center"><span class="logo-text">Slast-Gram</span></div>
-    <h2 style="font-size:20px;font-weight:700;margin-top:10px">👥 Undang Teman</h2>
-  </div>
-  <div class="container">
-    <div class="ref-card">
-      <div class="ref-bonus">
-        <h3>+50 Koin</h3>
-        <p>Setiap teman bergabung + <strong>10% komisi</strong> selamanya</p>
-      </div>
-      
-      <div class="ref-stats">
-        <div class="ref-stat">
-          <div class="ref-stat-val" id="refTotal">0</div>
-          <div style="font-size:12px;color:var(--muted)">Teman Diundang</div>
-        </div>
-        <div class="ref-stat">
-          <div class="ref-stat-val" id="refCommission">0</div>
-          <div style="font-size:12px;color:var(--muted)">Koin Komisi</div>
-        </div>
-        <div class="ref-stat">
-          <div class="ref-stat-val" id="refActive">0</div>
-          <div style="font-size:12px;color:var(--muted)">Aktif Hari Ini</div>
-        </div>
-      </div>
-      
-      <label class="form-label">Tautan Undangan Anda</label>
-      <div class="ref-link-box" id="refLink">Memuat...</div>
-      
-      <button class="modal-btn primary" onclick="copyRefLink()">📋 Salin & Bagikan</button>
-    </div>
-  </div>
-</div>
-
-<div id="screen-profile" class="screen">
-  <div class="header">
-    <div class="logo-center"><span class="logo-text">Slast-Gram</span></div>
-    <div class="user-row" style="margin-top:10px">
-      <div class="avatar" id="userAvatar3">U</div>
-      <div class="user-info">
-        <h2 id="userName3">Pengguna</h2>
-        <p>Member sejak <span id="joinDate">—</span></p>
-      </div>
-    </div>
-  </div>
-  <div class="container">
-    <h3 class="section-title">📊 Statistik Lengkap</h3>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
-      <div style="background:var(--surface);border-radius:14px;padding:20px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:28px;font-weight:800;color:var(--accent)" id="statAds">0</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Iklan Ditonton</div>
-      </div>
-      <div style="background:var(--surface);border-radius:14px;padding:20px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:28px;font-weight:800;color:var(--accent)" id="statGames">0</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Permainan Dimainkan</div>
-      </div>
-      <div style="background:var(--surface);border-radius:14px;padding:20px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:28px;font-weight:800;color:var(--accent)" id="statRef2">0</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Teman Diundang</div>
-      </div>
-      <div style="background:var(--surface);border-radius:14px;padding:20px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:28px;font-weight:800;color:var(--success)" id="statTotal">0</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Total Koin Diperoleh</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="guessModal" class="modal-overlay">
-  <div class="modal">
-    <h3 class="modal-title">🔢 Tebak Angka 1–10</h3>
-    <p class="modal-desc">Benar = +30 Koin!</p>
-    <input type="number" id="guessInput" class="game-input" placeholder="1–10" min="1" max="10">
-    <div id="guessResult" class="game-result">Siap menebak!</div>
-    <button class="game-btn" id="guessBtn" onclick="playGuess()">Mainkan</button>
-    <button class="game-btn secondary" onclick="closeGuessModal()">Tutup</button>
-  </div>
-</div>
-
-<div id="colorModal" class="modal-overlay">
-  <div class="modal">
-    <h3 class="modal-title">🎨 Tebak Warna</h3>
-    <p class="modal-desc">Benar = +35 Koin!</p>
-    <div style="width:140px;height:140px;border-radius:16px;margin:18px auto;background:var(--accent)" id="colorTarget"></div>
-    <div class="guess-grid" id="colorOptions"></div>
-    <button class="game-btn secondary" onclick="closeColorModal()">Tutup</button>
-  </div>
-</div>
-
-<div id="spinModal" class="modal-overlay">
-  <div class="modal">
-    <div style="font-size:64px">🎡</div>
-    <h3 class="modal-title">Putar Roda</h3>
-    <p class="modal-desc">Hadiah: 10–100 Koin!</p>
-    <button class="modal-btn primary" onclick="spinWheel()">Putar Sekarang</button>
-    <button class="modal-btn secondary" onclick="closeSpinModal()">Tutup</button>
-  </div>
-</div>
-
-<div id="boxModal" class="modal-overlay">
-  <div class="modal">
-    <div style="font-size:64px">🎁</div>
-    <h3 class="modal-title">Kotak Misteri</h3>
-    <p class="modal-desc">Isi: 25–200 Koin!</p>
-    <button class="modal-btn primary" onclick="openMysteryBox()">Buka Sekarang</button>
-    <button class="modal-btn secondary" onclick="closeBoxModal()">Tutup</button>
-  </div>
-</div>
-
-<div class="bottom-nav">
-  <div class="nav-tab active" onclick="switchScreen('home',this)">
-    <div class="nav-icon">🏠</div><div class="nav-label">Beranda</div>
-  </div>
-  <div class="nav-tab" onclick="switchScreen('rank',this)">
-    <div class="nav-icon">🏆</div><div class="nav-label">Peringkat</div>
-  </div>
-  <div class="nav-tab" onclick="switchScreen('withdraw',this)">
-    <div class="nav-icon">💰</div><div class="nav-label">Tarik</div>
-  </div>
-  <div class="nav-tab" onclick="switchScreen('referral',this)">
-    <div class="nav-icon">👥</div><div class="nav-label">Undang</div>
-  </div>
-  <div class="nav-tab" onclick="switchScreen('profile',this)">
-    <div class="nav-icon">👤</div><div class="nav-label">Akun</div>
-  </div>
-</div>
-
+<html style="margin:0;padding:0;">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 <script>
-const WEEK_DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-const COLORS = [
-  {name:'Merah',code:'#ef4444'},
-  {name:'Hijau',code:'#10b981'},
-  {name:'Biru',code:'#3b82f6'},
-  {name:'Kuning',code:'#eab308'},
-  {name:'Ungu',code:'#8b5cf6'},
-  {name:'Oranye',code:'#f97316'}
-];
-
-const WITHDRAW_CONFIG = { minAmount:5000, maxDaily:100000, rate:1 };
-
-let userData = {
-  name:'Pengguna', points:0, level:1, xp:0, xpNeeded:100, streak:0,
-  joinDate:new Date().toISOString().split('T')[0], lastCheckin:null,
-  adsWatched:0, gamesPlayed:0, referrals:0, commissionEarned:0, totalEarned:0,
-  tasks:{checkin:false,ad:false,game:false}, withdraws:[],
-  lastWithdrawDate:null, todayWithdrawTotal:0
-};
-
-const tg = window.Telegram?.WebApp || {initDataUnsafe:{},ready:()=>{}};
-const params = new URLSearchParams(window.location.search);
-const userId = params.get('user_id') || (tg.initDataUnsafe.user?.id) || ('u_'+Date.now());
-const firstName = params.get('first_name') || tg.initDataUnsafe.user?.first_name || 'Pengguna';
-const lastName = params.get('last_name') || tg.initDataUnsafe.user?.last_name || '';
-const fullName = firstName + (lastName?' '+lastName:'');
-
-const saved = localStorage.getItem('sg_data');
-if(saved){
-  try{
-    const p = JSON.parse(saved);
-    userData = {...userData,...p};
-    const today = new Date().toDateString();
-    if(userData.lastCheckin !== today) userData.tasks = {checkin:false,ad:false,game:false};
-    if(userData.lastWithdrawDate !== today){
-      userData.todayWithdrawTotal = 0;
-      userData.lastWithdrawDate = today;
-    }
-  }catch(e){}
-}
-userData.name = fullName;
-
-['userName','userName3'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fullName;});
-['userAvatar','userAvatar3'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=firstName[0]?.toUpperCase()||'U';});
-document.getElementById('joinDate').textContent = new Date(userData.joinDate).toLocaleDateString('id-ID');
-document.getElementById('refLink').textContent = `https://t.me/Slast_Gram_Bot?start=ref_${userId}`;
-tg.ready();
-
-function switchScreen(id,tab){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  if(tab)tab.classList.add('active');
-  updateUI();
-}
-
-function renderStreak(){
-  const now = new Date(), dayIndex = now.getDay();
-  const container = document.getElementById('streakContainer');
-  container.innerHTML = '';
-  for(let i=1;i<=7;i++){
-    const d = new Date(now);
-    d.setDate(now.getDate()-dayIndex+i);
-    const isToday = d.toDateString() === now.toDateString();
-    const isChecked = userData.lastCheckin === d.toDateString();
-    const isFuture = d > now;
-    let cls = 'day';
-    if(isToday)cls+=' today';
-    if(isChecked)cls+=' checked';
-    if(isFuture)cls+=' future';
-    container.innerHTML += `<div class="${cls}">${WEEK_DAYS[d.getDay()].slice(0,3)}<br>${isChecked?'✓':'○'}</div>`;
-  }
-  const btn = document.getElementById('checkinBtn');
-  if(userData.lastCheckin === now.toDateString()){
-    btn.disabled = true; btn.textContent='✅ Sudah Cek-in Hari Ini (+5 Koin)';
-  }else{
-    btn.disabled = false; btn.textContent='✅ Klaim Cek-in Harian (+5 Koin)';
-  }
-}
-
-function doCheckin(){
-  const today = new Date().toDateString();
-  if(userData.lastCheckin === today)return;
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-  userData.streak = userData.lastCheckin === yesterday.toDateString() ? userData.streak+1 : 1;
-  userData.lastCheckin = today;
-  userData.tasks.checkin = true;
-  addPoints(5,'Cek-in Harian');
-  showToast(`✅ Berhasil! +5 Koin • 🔥 ${userData.streak} hari berturut-turut`);
-}
-
-function updateUI(){
-  document.getElementById('userPoints').textContent = userData.points.toLocaleString();
-  document.getElementById('wdBalance').textContent = userData.points.toLocaleString();
-  document.getElementById('xpText').textContent = `${userData.xp} / ${userData.xpNeeded}`;
-  document.getElementById('xpBar').style.width = `${Math.min(100,(userData.xp/userData.xpNeeded)*100)}%`;
-  document.getElementById('userLevel').textContent = userData.level;
-  document.getElementById('streakDays').textContent = userData.streak;
-  
-  document.getElementById('statAds').textContent = userData.adsWatched;
-  document.getElementById('statGames').textContent = userData.gamesPlayed;
-  document.getElementById('statRef2').textContent = userData.referrals;
-  document.getElementById('statTotal').textContent = userData.totalEarned.toLocaleString();
-  document.getElementById('refTotal').textContent = userData.referrals;
-  document.getElementById('refCommission').textContent = userData.commissionEarned.toLocaleString();
-  
-  const status = [userData.tasks.checkin,userData.tasks.ad,userData.tasks.game];
-  ['taskCheckin','taskAd','taskGame'].forEach((id,i)=>{
-    const el=document.getElementById(id);
-    if(status[i]){el.className='task-check done';el.innerHTML='✓';}
-    else{el.className='task-check';el.innerHTML='○';}
-  });
-  
-  renderStreak(); renderLeaderboard(); renderWithdrawHistory();
-}
-
-function renderLeaderboard(){
-  const base = [
-    {name:'Pengguna Aktif',points:3250},{name:'Kolektor Koin',points:2800},
-    {name:'Penghasil Utama',points:2100},{name:'Pencari Cuan',points:1500},
-    {name:'Pemain Setia',points:950},{name:'Pengguna Baru',points:300}
-  ];
-  let all = [...base,{name:userData.name,points:userData.points,isMe:true}];
-  all.sort((a,b)=>b.points-a.points);
-  const list = document.getElementById('leaderboardList'); list.innerHTML='';
-  all.forEach((u,i)=>{
-    let rk=''; if(i==0)rk='top1';if(i==1)rk='top2';if(i==2)rk='top3';
-    list.innerHTML += `<div class="leader-item ${u.isMe?'me':''}">
-      <div class="leader-rank ${rk}">${i+1}</div>
-      <div class="leader-name">${u.name} ${u.isMe?'(Anda)':''}</div>
-      <div class="leader-points">${u.points.toLocaleString()} 💎</div>
-    </div>`;
-  });
-}
-
-function calcWithdraw(){
-  const amt = parseInt(document.getElementById('wdAmount').value)||0;
-  document.getElementById('detailCoin').textContent = `${amt.toLocaleString()} Koin`;
-  document.getElementById('wdEstimate').textContent = `Rp ${amt.toLocaleString()}`;
-  const btn = document.getElementById('wdSubmit');
-  btn.disabled = amt<WITHDRAW_CONFIG.minAmount || amt>userData.points || (userData.todayWithdrawTotal+amt)>WITHDRAW_CONFIG.maxDaily;
-}
-
-function submitWithdraw(){
-  const amt = parseInt(document.getElementById('wdAmount').value)||0;
-  const method = document.getElementById('wdMethod').value;
-  const num = document.getElementById('wdNumber').value.trim();
-  const name = document.getElementById('wdName').value.trim();
-  
-  if(amt<WITHDRAW_CONFIG.minAmount)return showToast('Min 5.000 Koin!','warning');
-  if(amt>userData.points)return showToast('Koin tidak cukup!','error');
-  if(!method||!num||!name)return showToast('Lengkapi semua data!','warning');
-  if(userData.todayWithdrawTotal+amt>WITHDRAW_CONFIG.maxDaily)return showToast('Maks penarikan harian tercapai!','warning');
-  
-  userData.points -= amt;
-  userData.todayWithdrawTotal += amt;
-  userData.lastWithdrawDate = new Date().toDateString();
-  userData.withdraws.unshift({
-    id:'wd_'+Date.now(), amount:amt, method, number:num, name,
-    date:new Date().toLocaleString('id-ID'), status:'pending'
-  });
-  
-  showToast('✅ Penarikan diajukan! Diproses 1–24 jam');
-  saveData(); updateUI();
-  document.getElementById('wdAmount').value='';document.getElementById('wdMethod').value='';
-  document.getElementById('wdNumber').value='';document.getElementById('wdName').value='';
-  document.getElementById('wdEstimate').textContent='Rp 0';
-}
-
-function renderWithdrawHistory(){
-  const list = document.getElementById('wdHistoryList');
-  if(!userData.withdraws.length){
-    list.innerHTML='<p style="text-align:center;color:var(--muted);padding:30px">Belum ada riwayat</p>';return;
-  }
-  list.innerHTML='';
-  const methodName = {dana:'DANA',shopeepay:'ShopeePay',gopay:'GoPay',ovo:'OVO',bank:'Bank'};
-  userData.withdraws.forEach(w=>{
-    list.innerHTML += `<div class="history-item">
-      <div><div style="font-weight:700;color:var(--accent)">${w.amount.toLocaleString()} Koin</div>
-      <div style="font-size:11px;color:var(--muted)">${methodName[w.method]||w.method} • ${w.date}</div></div>
-      <span class="history-status ${w.status}">${w.status==='pending'?'Menunggu':w.status==='paid'?'Sudah Dibayar':'Dibatalkan'}</span>
-    </div>`;
-  });
-}
-
-function copyRefLink(){
-  const link = document.getElementById('refLink').textContent;
-  navigator.clipboard.writeText(link).then(()=>{
-    showToast('✅ Tautan disalin! +50 Koin');
-    userData.referrals++;
-    addPoints(50,'Undang Teman');
-  }).catch(()=>showToast('Salin manual: '+link,'warning'));
-}
-
-function addPoints(amt,reason=''){
-  const commission = userData.referrals>0 ? Math.floor(amt*0.10) : 0;
-  if(commission>0){
-    userData.commissionEarned += commission;
-    userData.points += commission;
-  }
-  userData.points += amt;
-  userData.xp += amt;
-  userData.totalEarned += amt;
-  
-  while(userData.xp >= userData.xpNeeded){
-    userData.level++;
-    userData.xp -= userData.xpNeeded;
-    userData.xpNeeded = Math.floor(userData.xpNeeded*1.35);
-    setTimeout(()=>showToast(`🎉 Naik Level ${userData.level}!`),500);
-  }
-  saveData(); updateUI();
-  if(reason)showToast(`+${amt} 💎 — ${reason}` + (commission>0?` (+${commission} komisi)`:''));
-}
-
-function saveData(){localStorage.setItem('sg_data',JSON.stringify(userData));}
-
-function showToast(msg,type='success'){
-  const t = document.getElementById('toast');
-  t.textContent=msg; t.className='toast show';
-  if(type==='error')t.classList.add('error');
-  if(type==='warning')t.classList.add('warning');
-  setTimeout(()=>t.classList.remove('show'),3000);
-}
-
-async function watchRewardAd(){
-  let reward = 25;
-  if(window.Adsgram){
-    try{
-      const ad = Adsgram.init({blockId:'48064'});
-      const res = await ad.show();
-      if(!res.success)reward=25;
-      else reward=50;
-    }catch{reward=25;}
-  }
-  userData.adsWatched++; userData.tasks.ad=true;
-  addPoints(reward,`Iklan (+${reward})`);
-}
-
-let guessTarget = 0;
-async function playGuess(){
-  const btn = document.getElementById('guessBtn');
-  btn.disabled=true; btn.textContent='Memproses...';
-  if(guessTarget===0)guessTarget=Math.floor(Math.random()*10)+1;
-  
-  const input = parseInt(document.getElementById('guessInput').value);
-  const resEl = document.getElementById('guessResult');
-  
-  if(!input||input<1||input>10){
-    resEl.textContent='Masukkan angka 1–10!'; resEl.className='game-result lose';
-    btn.disabled=false; btn.textContent='Mainkan'; return;
-  }
-  
-  if(input===guessTarget){
-    resEl.textContent='✅ BENAR! +30 Koin'; resEl.className='game-result win';
-    addPoints(30,'Tebak Angka');
-    userData.gamesPlayed++; userData.tasks.game=true;
-    guessTarget=Math.floor(Math.random()*10)+1;
-  }else if(input<guessTarget){
-    resEl.textContent='⬆️ Terlalu Kecil! Coba lagi'; resEl.className='game-result lose';
-  }else{
-    resEl.textContent='⬇️ Terlalu Besar! Coba lagi'; resEl.className='game-result lose';
-  }
-  
-  btn.disabled=false; btn.textContent='Mainkan'; saveData();
-}
-function openGuessModal(){
-  document.getElementById('guessModal').classList.add('show');
-  document.getElementById('guessInput').value='';
-  document.getElementById('guessResult').textContent='Siap menebak!';
-  if(guessTarget===0)guessTarget=Math.floor(Math.random()*10)+1;
-}
-function closeGuessModal(){document.getElementById('guessModal').classList.remove('show');}
-
-let correctColorName = '';
-function playColor(){
-  const target = COLORS[Math.floor(Math.random()*COLORS.length)];
-  correctColorName = target.name;
-  document.getElementById('colorTarget').style.background = target.code;
-  const opts = [...COLORS].sort(()=>Math.random()-0.5);
-  const cont = document.getElementById('colorOptions'); cont.innerHTML='';
-  opts.forEach(c=>{
-    cont.innerHTML += `<button class="guess-btn" style="background:${c.code}" onclick="checkColor('${c.name}',this)">${c.name}</button>`;
-  });
-}
-function checkColor(name,btn){
-  document.querySelectorAll('#colorOptions .guess-btn').forEach(b=>b.style.pointerEvents='none');
-  if(name === correctColorName){
-    btn.classList.add('correct');
-    addPoints(35,'Tebak Warna');
-    userData.gamesPlayed++; userData.tasks.game=true;
-    showToast('✅ Benar! +35 Koin');
-  }else{
-    btn.classList.add('wrong');
-    showToast('❌ Salah!','error');
-  }
-  saveData();
-}
-function openColorModal(){
-  document.getElementById('colorModal').classList.add('show');
-  playColor();
-}
-function closeColorModal(){document.getElementById('colorModal').classList.remove('show');}
-
-async function spinWheel(){
-  const reward = Math.floor(Math.random()*91)+10;
-  addPoints(reward,'Putar Roda');
-  showToast(`🎉 Dapat ${reward} Koin!`);
-  closeSpinModal();
-}
-function openSpinModal(){document.getElementById('spinModal').classList.add('show');}
-function closeSpinModal(){document.getElementById('spinModal').classList.remove('show');}
-
-async function openMysteryBox(){
-  const reward = Math.floor(Math.random()*176)+25;
-  addPoints(reward,'Kotak Misteri');
-  showToast(`🎁 Dapat ${reward} Koin!`);
-  closeBoxModal();
-}
-function closeBoxModal(){document.getElementById('boxModal').classList.remove('show');}
-
-updateUI();
+(function(){
+  var s = document.createElement('style');
+  s.textContent = ':root{--bg:#fdf9fb;--card:#ffffff;--text:#0f172a;--muted:#64748b;--accent:#bd3193;--accent-soft:rgba(189,49,147,.14);--accent2:#0891b2;--accent2-soft:rgba(8,145,178,.14);--border:rgba(15,23,42,.07);--gold:#f59e0b;--gold-soft:rgba(245,158,11,.14)}.reveal{opacity:0;transform:translateY(20px);animation:fadeUp .6s ease forwards}.reveal:nth-child(2){animation-delay:.1s}.reveal:nth-child(3){animation-delay:.2s}.reveal:nth-child(4){animation-delay:.3s}.reveal:nth-child(5){animation-delay:.4s}.reveal:nth-child(6){animation-delay:.5s}@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(189,49,147,.4)}50%{box-shadow:0 0 0 12px rgba(189,49,147,0)}}@keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes coin-pop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}.pulse-glow{animation:pulse-glow 2s infinite}.spin-slow{animation:spin-slow 20s linear infinite}.float-anim{animation:float 3s ease-in-out infinite}.coin-pop{animation:coin-pop .4s ease}.card-hover{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}.card-hover:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(189,49,147,.12);border-color:var(--accent)}.btn-primary{background:linear-gradient(135deg,var(--accent),#d946a8);color:#fff;font-weight:700;border:none;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(189,49,147,.35)}.btn-primary:active{transform:translateY(0)}.btn-secondary{background:var(--card);color:var(--text);border:1.5px solid var(--border);font-weight:600;cursor:pointer;transition:all .15s ease}.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}.task{--adsgram-task-font-size:15px;--adsgram-task-icon-size:48px;--adsgram-task-icon-title-gap:12px;--adsgram-task-icon-border-radius:12px;--adsgram-task-button-width:72px;display:block;width:100%;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;font-family:'Urbanist',sans-serif}.task__reward{display:flex;align-items:center;gap:4px;font-weight:700;color:var(--gold);font-size:14px}.task__button{background:linear-gradient(135deg,var(--accent),#d946a8);color:#fff;padding:8px 14px;border-radius:10px;font-weight:700;font-size:13px;text-align:center;cursor:pointer}.task__button_claim{background:linear-gradient(135deg,var(--gold),#fbbf24);color:#1a1a2e;padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;text-align:center;cursor:pointer}.task__button_done{background:#10b981;color:#fff;padding:8px 14px;border-radius:10px;font-weight:700;font-size:13px;text-align:center}.gradient-text{background:linear-gradient(100deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}.progress-bar{height:8px;border-radius:999px;background:rgba(128,128,128,.1);overflow:hidden}.progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .5s ease}.tab-btn{padding:10px 18px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s ease;color:var(--muted);border:1.5px solid transparent}.tab-btn.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}.tab-btn:hover:not(.active){color:var(--text)}.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .25s ease}.modal-overlay.show{opacity:1;pointer-events:auto}.modal-content{background:var(--card);border-radius:20px;padding:28px;max-width:360px;width:90%;transform:scale(.9);transition:transform .25s ease}.modal-overlay.show .modal-content{transform:scale(1)}.wheel-container{position:relative;width:280px;height:280px;margin:0 auto}.wheel-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:10;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:28px solid var(--accent)}.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--text);color:var(--bg);padding:12px 24px;border-radius:12px;font-weight:600;z-index:200;transition:transform .3s ease;box-shadow:0 8px 30px rgba(0,0,0,.2)}.toast.show{transform:translateX(-50%) translateY(0)}';
+  document.head.appendChild(s);
+})();
 </script>
-</body>
+<div style="background-color:transparent;box-sizing:border-box;">
+  <div style="color:var(--text);font-family:'Urbanist',sans-serif;background:radial-gradient(1000px 500px at 100% -10%,rgba(189,49,147,.08),transparent 60%),radial-gradient(800px 400px at 0% 0%,rgba(8,145,178,.06),transparent 60%),var(--bg);min-height:100%;">
+    <div class="max-w-lg mx-auto px-4 py-6">
+
+      <!-- HEADER -->
+      <div class="reveal mb-6">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(189,49,147,.3);">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 style="font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.1;" class="gradient-text">Slast-Gram</h1>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px;">@Slast_Gram_Bot</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:var(--gold-soft);border:1px solid rgba(245,158,11,.25);padding:8px 14px;border-radius:999px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span id="coinBalance" style="font-weight:800;color:#b45309;font-size:16px;font-variant-numeric:tabular-nums;">1,250</span>
+          </div>
+        </div>
+
+        <!-- User Card -->
+        <div style="background:linear-gradient(135deg,var(--accent),#d946a8);border-radius:18px;padding:18px;color:#fff;position:relative;overflow:hidden;">
+          <div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.1);"></div>
+          <div style="position:absolute;right:30px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);"></div>
+          <div style="position:relative;display:flex;align-items:center;gap:14px;">
+            <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;">S</div>
+            <div style="flex:1;">
+              <p style="font-weight:700;font-size:16px;">Hai, Sahabat Slast!</p>
+              <p style="font-size:12px;opacity:.85;margin-top:2px;">Level 5 · 3,750 XP</p>
+              <div class="progress-bar" style="margin-top:8px;background:rgba(255,255,255,.2);">
+                <div class="progress-fill" style="width:65%;background:#fff;"></div>
+              </div>
+              <p style="font-size:11px;opacity:.75;margin-top:4px;">1,250 XP lagi ke Level 6</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAILY CLAIM -->
+      <div class="reveal mb-5">
+        <div class="card-hover" style="background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <path d="M16 2v4M8 2v4M3 10h18"/>
+                </svg>
+              </div>
+              <div>
+                <p style="font-weight:700;font-size:15px;">Klaim Harian</p>
+                <p style="font-size:11px;color:var(--muted);margin-top:1px;">Hari ke-4 dari 7</p>
+              </div>
+            </div>
+            <span style="font-size:11px;background:var(--accent-soft);color:var(--accent);padding:4px 10px;border-radius:999px;font-weight:700;">+50</span>
+          </div>
+          
+          <!-- Daily streak -->
+          <div style="display:flex;gap:6px;margin-bottom:14px;">
+            <div style="flex:1;text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;">Sen</p>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;">Sel</p>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;">Rab</p>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div id="todayClaim" style="width:100%;height:36px;border-radius:8px;background:var(--gold-soft);border:2px dashed var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;" class="pulse-glow">
+                <span style="font-weight:800;color:#b45309;font-size:12px;">!</span>
+              </div>
+              <p style="font-size:10px;color:var(--accent);margin-top:4px;font-weight:700;">Hari Ini</p>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:rgba(128,128,128,.08);display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:10px;color:var(--muted);font-weight:600;">+75</span>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:4px;">Kam</p>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:rgba(128,128,128,.08);display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:10px;color:var(--muted);font-weight:600;">+100</span>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:4px;">Jum</p>
+            </div>
+            <div style="flex:1;text-align:center;">
+              <div style="width:100%;height:36px;border-radius:8px;background:rgba(128,128,128,.08);display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:10px;color:var(--gold);font-weight:700;">2x</span>
+              </div>
+              <p style="font-size:10px;color:var(--muted);margin-top:4px;">Sab</p>
+            </div>
+          </div>
+
+          <button id="dailyClaimBtn" class="btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            Klaim +50 Koin Sekarang
+          </button>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="reveal mb-4" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+        <button class="tab-btn active" data-tab="tasks">Tugas</button>
+        <button class="tab-btn" data-tab="spin">Putar</button>
+        <button class="tab-btn" data-tab="invite">Undang</button>
+        <button class="tab-btn" data-tab="leaderboard">Papan Atas</button>
+      </div>
+
+      <!-- TASKS TAB -->
+      <div id="tab-tasks" class="tab-content">
+        <div class="reveal mb-5">
+          <p style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:10px;padding:0 2px;">Tugas Iklan · Hasilkan Koin</p>
+          
+          <!-- AdsGram Task Block -->
+          <div style="margin-bottom:12px;">
+            <adsgram-task data-block-id="task-48066" class="task">
+              <p slot="reward" class="task__reward">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1">
+                  <circle cx="12" cy="12" r="10"/>
+                </svg>
+                <span id="taskReward">+100</span>
+              </p>
+              <div slot="button" class="task__button">Go</div>
+              <div slot="claim" class="task__button_claim">Klaim</div>
+              <div slot="done" class="task__button_done">Selesai</div>
+            </adsgram-task>
+          </div>
+
+          <!-- Additional Task 1 -->
+          <div class="card-hover" style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:var(--accent2-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <p style="font-weight:700;font-size:14px;">Gabung Channel</p>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px;">@SlastGramChannel</p>
+            </div>
+            <button class="task-btn btn-secondary" data-reward="50" style="padding:8px 14px;border-radius:10px;font-size:13px;">
+              <span style="color:var(--gold);font-weight:800;">+50</span>
+            </button>
+          </div>
+
+          <!-- Additional Task 2 -->
+          <div class="card-hover" style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <p style="font-weight:700;font-size:14px;">Bagikan ke Teman</p>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px;">Kirim link undangan</p>
+            </div>
+            <button class="task-btn btn-secondary" data-reward="30" style="padding:8px 14px;border-radius:10px;font-size:13px;">
+              <span style="color:var(--gold);font-weight:800;">+30</span>
+            </button>
+          </div>
+
+          <!-- Additional Task 3 - Watch Video Ad (Reward) -->
+          <div class="card-hover" style="background:linear-gradient(135deg,rgba(189,49,147,.06),rgba(8,145,178,.04));border:1.5px solid var(--accent);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <p style="font-weight:700;font-size:14px;">Tonton Video Iklan</p>
+              <p style="font-size:11px;color:var(--muted);margin-top:2px;">Reward tertinggi hari ini</p>
+            </div>
+            <button id="watchRewardBtn" class="btn-primary" style="padding:10px 16px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><circle cx="12" cy="12" r="10"/></svg>
+              <span style="font-weight:800;">+200</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPIN TAB -->
+      <div id="tab-spin" class="tab-content" style="display:none;">
+        <div class="reveal mb-5">
+          <p style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:14px;padding:0 2px;">Roda Keberuntungan</p>
+          
+          <div class="card-hover" style="background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:24px;text-align:center;">
+            <div class="wheel-container float-anim mb-6">
+              <div class="wheel-pointer"></div>
+              <svg id="wheel" width="280" height="280" viewBox="0 0 280 280" style="transition:transform 4s cubic-bezier(.17,.67,.12,.99);">
+                <defs>
+                  <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#bd3193"/><stop offset="100%" style="stop-color:#d946a8"/></linearGradient>
+                  <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0891b2"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient>
+                  <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#fbbf24"/></linearGradient>
+                  <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#10b981"/><stop offset="100%" style="stop-color:#34d399"/></linearGradient>
+                </defs>
+                <circle cx="140" cy="140" r="135" fill="url(#g1)" stroke="#fff" stroke-width="4"/>
+                <path d="M140,140 L140,5 A135,135 0 0,1 256.77,72.5 Z" fill="url(#g1)"/>
+                <path d="M140,140 L256.77,72.5 A135,135 0 0,1 256.77,207.5 Z" fill="url(#g2)"/>
+                <path d="M140,140 L256.77,207.5 A135,135 0 0,1 140,275 Z" fill="url(#g3)"/>
+                <path d="M140,140 L140,275 A135,135 0 0,1 23.23,207.5 Z" fill="url(#g4)"/>
+                <path d="M140,140 L23.23,207.5 A135,135 0 0,1 23.23,72.5 Z" fill="url(#g1)"/>
+                <path d="M140,140 L23.23,72.5 A135,135 0 0,1 140,5 Z" fill="url(#g2)"/>
+                <circle cx="140" cy="140" r="30" fill="#fff" stroke="var(--accent)" stroke-width="3"/>
+                <text x="140" y="60" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">50</text>
+                <text x="225" y="110" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">100</text>
+                <text x="225" y="180" text-anchor="middle" fill="#1a1a2e" font-size="14" font-weight="800">25</text>
+                <text x="140" y="230" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">200</text>
+                <text x="55" y="180" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">75</text>
+                <text x="55" y="110" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">150</text>
+              </svg>
+            </div>
+            
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Koin yang dipertaruhkan: <strong style="color:var(--gold);">50</strong></p>
+            
+            <button id="spinBtn" class="btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;">
+              Putar Sekarang!
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVITE TAB -->
+      <div id="tab-invite" class="tab-content" style="display:none;">
+        <div class="reveal mb-5">
+          <p style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:14px;padding:0 2px;">Program Referral</p>
+          
+          <div class="card-hover" style="background:linear-gradient(135deg,var(--accent2),#06b6d4);border-radius:18px;padding:20px;color:#fff;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+              <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div>
+                <p style="font-weight:800;font-size:18px;">Undang Teman</p>
+                <p style="font-size:12px;opacity:.9;">Dapatkan bonus berlimpah!</p>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center;">
+                <p style="font-size:22px;font-weight:800;" id="inviteCount">0</p>
+                <p style="font-size:11px;opacity:.85;">Teman Diundang</p>
+              </div>
+              <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center;">
+                <p style="font-size:22px;font-weight:800;color:#fde68a;" id="inviteEarned">0</p>
+                <p style="font-size:11px;opacity:.85;">Koin Didapat</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-hover" style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;">
+            <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;">Kode Referral Kamu</p>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;background:rgba(128,128,128,.06);border-radius:10px;padding:12px 14px;font-family:monospace;font-weight:700;font-size:14px;letter-spacing:.05em;">SLAST5GRAM</div>
+              <button id="copyRefBtn" class="btn-secondary" style="padding:12px 14px;border-radius:10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button id="inviteBtn" class="btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Bagikan Link Undangan
+          </button>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD TAB -->
+      <div id="tab-leaderboard" class="tab-content" style="display:none;">
+        <div class="reveal mb-5">
+          <p style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:14px;padding:0 2px;">Papan Peringkat Mingguan</p>
+          
+          <!-- Top 3 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+            <!-- 2nd -->
+            <div style="text-align:center;">
+              <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#94a3b8,#cbd5e1);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.1);">R</div>
+              <p style="font-size:12px;font-weight:700;">Rizki...</p>
+              <p style="font-size:11px;color:var(--gold);font-weight:800;">8,420</p>
+              <div style="width:28px;height:28px;border-radius:50%;background:#94a3b8;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin:6px auto 0;">2</div>
+            </div>
+            <!-- 1st -->
+            <div style="text-align:center;margin-top:-12px;">
+              <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#fbbf24);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:24px;border:3px solid #fff;box-shadow:0 4px 20px rgba(245,158,11,.4);">A</div>
+              <p style="font-size:13px;font-weight:800;">Andre...</p>
+              <p style="font-size:12px;color:var(--gold);font-weight:800;">12,750</p>
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#fbbf24);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;margin:6px auto 0;">1</div>
+            </div>
+            <!-- 3rd -->
+            <div style="text-align:center;">
+              <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#b45309,#d97706);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.1);">M</div>
+              <p style="font-size:12px;font-weight:700;">Maya...</p>
+              <p style="font-size:11px;color:var(--gold);font-weight:800;">6,890</p>
+              <div style="width:28px;height:28px;border-radius:50%;background:#b45309;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin:6px auto 0;">3</div>
+            </div>
+          </div>
+
+          <!-- Leaderboard List -->
+          <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;">
+            <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px;">
+              <span style="width:24px;font-size:13px;font-weight:800;color:var(--muted);">4</span>
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:13px;">D</div>
+              <span style="flex:1;font-size:13px;font-weight:600;">Dinda K.</span>
+              <span style="font-size:13px;font-weight:800;color:var(--gold);">5,420</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px;">
+              <span style="width:24px;font-size:13px;font-weight:800;color:var(--muted);">5</span>
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--accent2-soft);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent2);font-size:13px;">B</div>
+              <span style="flex:1;font-size:13px;font-weight:600;">Budi P.</span>
+              <span style="font-size:13px;font-weight:800;color:var(--gold);">4,870</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px;background:var(--accent-soft);">
+              <span style="width:24px;font-size:13px;font-weight:800;color:var(--accent);">27</span>
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;">S</div>
+              <span style="flex:1;font-size:13px;font-weight:700;">Kamu</span>
+              <span style="font-size:13px;font-weight:800;color:var(--gold);">1,250</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:12px 14px;gap:10px;">
+              <span style="width:24px;font-size:13px;font-weight:800;color:var(--muted);">28</span>
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(128,128,128,.1);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);font-size:13px;">L</div>
+              <span style="flex:1;font-size:13px;font-weight:600;">Lina M.</span>
+              <span style="font-size:13px;font-weight:800;color:var(--gold);">1,180</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM CTA - Show Interstitial -->
+      <div class="reveal mb-6">
+        <div class="card-hover" style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:18px;padding:18px;position:relative;overflow:hidden;">
+          <div style="position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(189,49,147,.3),transparent);"></div>
+          <div style="position:relative;display:flex;align-items:center;gap:14px;">
+            <div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#fbbf24);display:flex;align-items:center;justify-content:center;flex-shrink:0;" class="spin-slow">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div style="flex:1;">
+              <p style="color:#fff;font-weight:800;font-size:15px;">Bonus Tambahan!</p>
+              <p style="color:rgba(255,255,255,.7);font-size:12px;margin-top:2px;">Klik untuk dapatkan hadiah surprise</p>
+            </div>
+            <button id="surpriseBtn" class="btn-primary" style="padding:10px 18px;border-radius:10px;font-size:13px;">
+              Buka
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INFO SECTION -->
+      <div class="reveal mb-6">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <p style="font-size:11px;color:var(--muted);font-weight:600;">Tukar Koin</p>
+            <p style="font-size:12px;font-weight:700;margin-top:2px;">Segera Hadir</p>
+          </div>
+          <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--accent2-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <p style="font-size:11px;color:var(--muted);font-weight:600;">Bantuan</p>
+            <p style="font-size:12px;font-weight:700;margin-top:2px;">FAQ & Support</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div style="text-align:center;padding:16px 0 24px;border-top:1px solid var(--border);">
+        <p style="font-size:11px;color:var(--muted);">Powered by <strong style="color:var(--accent);">AdsGram</strong> · Monetized Mini App</p>
+        <p style="font-size:10px;color:var(--muted);margin-top:4px;opacity:.7;">Slast-Gram v1.0 · @Slast_Gram_Bot</p>
+      </div>
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">+50 Koin Ditambahkan!</div>
+
+    <!-- Interstitial Modal (simulation) -->
+    <div id="interstitialModal" class="modal-overlay">
+      <div class="modal-content" style="text-align:center;">
+        <div style="width:60px;height:60px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:8px;">Selamat!</h3>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:16px;">Kamu mendapatkan bonus koin tambahan</p>
+        <div style="font-size:36px;font-weight:800;color:var(--gold);margin-bottom:20px;" id="modalReward">+125</div>
+        <button id="closeModalBtn" class="btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;">
+          Terima Hadiah
+        </button>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      // State
+      var coins = 1250;
+      var spinCount = 0;
+      var interstitialShown = false;
+      var dailyClaimed = false;
+
+      // DOM Elements
+      var coinBalance = document.getElementById('coinBalance');
+      var toast = document.getElementById('toast');
+      var modal = document.getElementById('interstitialModal');
+      var modalReward = document.getElementById('modalReward');
+
+      // Initialize AdsGram Controllers
+      var AdReward = null;
+      var AdInterstitial = null;
+      
+      try {
+        if (window.Adsgram) {
+          AdReward = window.Adsgram.init({ blockId: "48064" });
+          AdInterstitial = window.Adsgram.init({ blockId: "int-48065" });
+        }
+      } catch(e) {
+        console.log('AdsGram init:', e);
+      }
+
+      // Telegram WebApp init
+      try {
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        }
+      } catch(e) {}
+
+      // Helper functions
+      function formatNumber(n) {
+        return n.toLocaleString('id-ID');
+      }
+
+      function updateCoins(amount, showToast) {
+        coins += amount;
+        coinBalance.textContent = formatNumber(coins);
+        coinBalance.classList.add('coin-pop');
+        setTimeout(function(){ coinBalance.classList.remove('coin-pop'); }, 400);
+        if (showToast) {
+          showToastMsg((amount >= 0 ? '+' : '') + amount + ' Koin Ditambahkan!');
+        }
+      }
+
+      function showToastMsg(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(function(){ toast.classList.remove('show'); }, 2500);
+      }
+
+      function showModal(reward) {
+        modalReward.textContent = '+' + reward;
+        modal.classList.add('show');
+      }
+
+      function hideModal() {
+        modal.classList.remove('show');
+      }
+
+      // Show interstitial ad
+      function showInterstitialAd() {
+        if (AdInterstitial) {
+          try {
+            AdInterstitial.show().then(function(result) {
+              console.log('Interstitial shown:', result);
+            }).catch(function(e) {
+              console.log('Interstitial error:', e);
+            });
+          } catch(e) {}
+        }
+      }
+
+      // Show reward ad
+      function showRewardAd(callback) {
+        if (AdReward) {
+          try {
+            AdReward.show().then(function(result) {
+              if (result.done) {
+                callback();
+              }
+            }).catch(function(e) {
+              console.log('Reward ad error:', e);
+              // Fallback: still give reward for demo
+              callback();
+            });
+          } catch(e) {
+            callback();
+          }
+        } else {
+          callback();
+        }
+      }
+
+      // Tabs switching
+      var tabBtns = document.querySelectorAll('.tab-btn');
+      var tabContents = document.querySelectorAll('.tab-content');
+      
+      tabBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var tab = this.dataset.tab;
+          
+          tabBtns.forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          
+          tabContents.forEach(function(content) {
+            content.style.display = 'none';
+          });
+          document.getElementById('tab-' + tab).style.display = 'block';
+
+          // Show interstitial every 3 tab switches
+          spinCount++;
+          if (spinCount % 3 === 0 && !interstitialShown) {
+            showInterstitialAd();
+            interstitialShown = true;
+          }
+        });
+      });
+
+      // Daily Claim Button
+      document.getElementById('dailyClaimBtn').addEventListener('click', function() {
+        if (dailyClaimed) {
+          showToastMsg('Kamu sudah klaim hari ini!');
+          return;
+        }
+        
+        showRewardAd(function() {
+          updateCoins(50, true);
+          dailyClaimed = true;
+          var todayEl = document.getElementById('todayClaim');
+          todayEl.style.background = '#10b981';
+          todayEl.style.border = 'none';
+          todayEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>';
+          todayEl.classList.remove('pulse-glow');
+          document.getElementById('dailyClaimBtn').textContent = 'Sudah Diklaim Hari Ini';
+          document.getElementById('dailyClaimBtn').style.opacity = '.6';
+          document.getElementById('dailyClaimBtn').style.cursor = 'not-allowed';
+        });
+      });
+
+      // Watch Reward Video Button
+      document.getElementById('watchRewardBtn').addEventListener('click', function() {
+        showRewardAd(function() {
+          updateCoins(200, true);
+        });
+      });
+
+      // Simple task buttons
+      document.querySelectorAll('.task-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var reward = parseInt(this.dataset.reward);
+          showRewardAd(function() {
+            updateCoins(reward, true);
+          });
+        });
+      });
+
+      // Spin Wheel
+      var wheel = document.getElementById('wheel');
+      var spinning = false;
+      var rewards = [50, 100, 25, 200, 75, 150];
+      
+      document.getElementById('spinBtn').addEventListener('click', function() {
+        if (spinning) return;
+        if (coins < 50) {
+          showToastMsg('Koin tidak cukup! Butuh 50 koin');
+          return;
+        }
+        
+        updateCoins(-50, false);
+        spinning = true;
+        this.textContent = 'Memutar...';
+        this.style.opacity = '.7';
+        
+        var randomIndex = Math.floor(Math.random() * rewards.length);
+        var reward = rewards[randomIndex];
+        var segmentAngle = 360 / 6;
+        var targetAngle = randomIndex * segmentAngle + segmentAngle / 2;
+        var spins = 5;
+        var totalRotation = spins * 360 + (360 - targetAngle);
+        
+        wheel.style.transform = 'rotate(' + totalRotation + 'deg)';
+        
+        setTimeout(function() {
+          showRewardAd(function() {
+            updateCoins(reward, true);
+            showModal(reward);
+          });
+          spinning = false;
+          document.getElementById('spinBtn').textContent = 'Putar Sekarang!';
+          document.getElementById('spinBtn').style.opacity = '1';
+        }, 4200);
+      });
+
+      // Surprise Button - Interstitial
+      document.getElementById('surpriseBtn').addEventListener('click', function() {
+        showInterstitialAd();
+        setTimeout(function() {
+          var bonus = Math.floor(Math.random() * 100) + 50;
+          showRewardAd(function() {
+            updateCoins(bonus, false);
+            showModal(bonus);
+          });
+        }, 500);
+      });
+
+      // Copy referral
+      document.getElementById('copyRefBtn').addEventListener('click', function() {
+        try {
+          navigator.clipboard.writeText('SLAST5GRAM');
+          showToastMsg('Kode disalin!');
+        } catch(e) {
+          showToastMsg('Kode: SLAST5GRAM');
+        }
+      });
+
+      // Invite button
+      document.getElementById('inviteBtn').addEventListener('click', function() {
+        showToastMsg('Link undangan dibagikan!');
+        var inviteCount = document.getElementById('inviteCount');
+        var inviteEarned = document.getElementById('inviteEarned');
+        inviteCount.textContent = parseInt(inviteCount.textContent) + 1;
+        inviteEarned.textContent = parseInt(inviteEarned.textContent) + 250;
+        updateCoins(250, true);
+      });
+
+      // Close modal
+      document.getElementById('closeModalBtn').addEventListener('click', hideModal);
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) hideModal();
+      });
+
+      // AdsGram Task event listener
+      try {
+        var taskEl = document.querySelector('adsgram-task');
+        if (taskEl) {
+          taskEl.addEventListener('reward', function(e) {
+            var rewardText = document.getElementById('taskReward');
+            var reward = rewardText ? parseInt(rewardText.textContent.replace('+', '')) : 100;
+            updateCoins(reward, true);
+          });
+        }
+      } catch(e) {}
+
+    })();
+    </script>
+  </div>
+</div>
 </html>
