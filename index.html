@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💰 KontenBot Pro - Dapat Uang dari Telegram</title>
+    <script src="https://cdn.jsdelivr.net/npm/@twa-dev/sdk@7.10.1/dist/sdk-web.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --primary: #2b5278; --primary-dark: #1e3a5f;
+            --accent: #ff6b35; --accent-light: #ff8c5a;
+            --accent-gradient: linear-gradient(135deg, #ff6b35, #f7931e);
+            --success: #10b981; --danger: #ef4444;
+            --purple: #8b5cf6; --gold: #fbbf24;
+            --bg: #f8fafc; --card: #ffffff;
+            --text: #1e293b; --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding-bottom: 80px; overflow-x: hidden;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2b5278 50%, #3d6b94 100%);
+            color: white; padding: 16px;
+            padding-top: calc(16px + env(safe-area-inset-top));
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(43, 82, 120, 0.3);
+        }
+        .header-top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .balance-display {
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+            padding: 8px 16px; border-radius: 20px; font-size: 15px; font-weight: 700;
+            display: flex; align-items: center; gap: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .streak-bar { display: flex; gap: 6px; justify-content: center; }
+        .streak-day {
+            width: 36px; height: 44px; border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 10px; border: 1px solid rgba(255,255,255,0.15);
+        }
+        .streak-day.active {
+            background: var(--accent-gradient); border-color: transparent;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+        }
+        .streak-day.claimed {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+        .streak-icon { font-size: 16px; margin-bottom: 2px; }
+        .container { padding: 16px; }
+        .card {
+            background: var(--card); border-radius: 16px; padding: 18px;
+            margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid var(--border);
+        }
+        .card-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-radius: 16px; padding: 20px;
+            margin-bottom: 14px; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+        .card-orange {
+            background: var(--accent-gradient); color: white; border-radius: 16px;
+            padding: 20px; margin-bottom: 14px;
+            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+        }
+        .card-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white; border-radius: 16px; padding: 20px;
+            margin-bottom: 14px; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+        }
+        .btn {
+            border: none; border-radius: 12px; padding: 14px 20px;
+            font-size: 15px; font-weight: 700; cursor: pointer; width: 100%;
+            transition: all 0.15s; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-accent {
+            background: var(--accent-gradient); color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+        .btn-success { background: var(--success); color: white; }
+        .btn-gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #78350f;
+        }
+        .btn-outline {
+            background: transparent; color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        .btn-small { padding: 10px 14px; font-size: 13px; border-radius: 10px; }
+        .ad-banner-top {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(43, 82, 120, 0.08));
+            border: 2px dashed rgba(255, 107, 53, 0.35);
+            border-radius: 14px; padding: 16px; text-align: center;
+            position: relative; cursor: pointer; transition: all 0.2s;
+            margin-bottom: 14px;
+        }
+        .ad-banner-top:hover {
+            border-color: var(--accent); transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.15);
+        }
+        .native-ad {
+            background: var(--card); border-radius: 14px; padding: 16px;
+            margin-bottom: 14px; border: 1px solid var(--border);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .native-ad:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(255, 107, 53, 0.12);
+            transform: translateY(-1px);
+        }
+        .ad-label {
+            display: inline-block; background: rgba(255, 107, 53, 0.12);
+            color: var(--accent); padding: 3px 10px; border-radius: 8px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .ad-note {
+            background: rgba(255, 107, 53, 0.06);
+            border: 1px solid rgba(255, 107, 53, 0.15);
+            border-radius: 10px; padding: 10px 12px;
+            font-size: 11px; color: var(--text-muted); margin-top: 10px;
+        }
+        .ad-note strong { color: var(--accent); }
+        .wheel-container {
+            position: relative; width: 260px; height: 260px;
+            margin: 0 auto 20px;
+        }
+        .wheel {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(
+                from 0deg, #ff6b35 0deg 45deg, #fbbf24 45deg 90deg,
+                #10b981 90deg 135deg, #3b82f6 135deg 180deg,
+                #8b5cf6 180deg 225deg, #ec4899 225deg 270deg,
+                #f59e0b 270deg 315deg, #ef4444 315deg 360deg
+            );
+            position: relative;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 0 0 8px white, inset 0 0 0 10px var(--border);
+        }
+        .wheel::before {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: 60px; background: white; border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 2;
+        }
+        .wheel-pointer {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-top: 28px solid var(--accent);
+            z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        .mystery-box {
+            width: 140px; height: 140px; margin: 0 auto 16px;
+            position: relative; cursor: pointer; transition: transform 0.3s;
+        }
+        .mystery-box:hover { transform: scale(1.05); }
+        .mystery-box.shaking { animation: shake 0.5s ease-in-out 3; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) rotate(0); }
+            25% { transform: translateX(-8px) rotate(-3deg); }
+            75% { transform: translateX(8px) rotate(3deg); }
+        }
+        .box-body {
+            width: 100%; height: 100px;
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            border-radius: 12px; position: absolute; bottom: 0;
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        }
+        .box-lid {
+            width: 110%; height: 40px;
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            border-radius: 8px; position: absolute; top: 0; left: -5%;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .box-ribbon {
+            position: absolute; width: 20px; height: 100%;
+            background: linear-gradient(180deg, #fbbf24, #f59e0b);
+            left: 50%; transform: translateX(-50%); z-index: 1;
+        }
+        .box-bow {
+            position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+            width: 50px; height: 30px;
+            background: radial-gradient(ellipse, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 50%; z-index: 2;
+        }
+        .level-bar {
+            height: 10px; background: #e2e8f0; border-radius: 5px;
+            overflow: hidden; margin: 8px 0;
+        }
+        .level-fill {
+            height: 100%; background: var(--accent-gradient);
+            border-radius: 5px; transition: width 0.5s;
+        }
+        .quick-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 10px; margin-bottom: 14px;
+        }
+        .quick-action {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px; text-align: center;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .quick-action:hover {
+            border-color: var(--accent); transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.1);
+        }
+        .quick-icon { font-size: 32px; margin-bottom: 8px; }
+        .quick-title { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+        .quick-reward { font-size: 11px; color: var(--accent); font-weight: 600; }
+        .earn-item {
+            display: flex; align-items: center; gap: 14px; padding: 14px;
+            border: 1px solid var(--border); border-radius: 14px;
+            margin-bottom: 10px; cursor: pointer;
+            transition: all 0.15s; background: var(--card);
+        }
+        .earn-item:hover {
+            border-color: var(--accent); background: rgba(255, 107, 53, 0.02);
+        }
+        .earn-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; flex-shrink: 0;
+        }
+        .earn-icon.orange { background: rgba(255, 107, 53, 0.12); }
+        .earn-icon.blue { background: rgba(43, 82, 120, 0.1); }
+        .earn-icon.green { background: rgba(16, 185, 129, 0.1); }
+        .earn-icon.purple { background: rgba(139, 92, 246, 0.1); }
+        .earn-icon.red { background: rgba(239, 68, 68, 0.1); }
+        .earn-icon.gold { background: rgba(251, 191, 36, 0.15); }
+        .earn-info { flex: 1; }
+        .earn-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .earn-desc { font-size: 12px; color: var(--text-muted); }
+        .reward-tag {
+            background: rgba(255, 107, 53, 0.12); color: var(--accent);
+            padding: 6px 12px; border-radius: 10px; font-size: 12px;
+            font-weight: 700; white-space: nowrap;
+        }
+        .reward-tag.hot {
+            background: rgba(239, 68, 68, 0.12); color: var(--danger);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; border-top: 1px solid var(--border);
+            display: flex; padding: 8px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            flex: 1; padding: 8px 4px; text-align: center;
+            border-radius: 12px; cursor: pointer;
+            color: var(--text-muted); font-size: 11px; font-weight: 600;
+            transition: all 0.15s;
+        }
+        .nav-item.active { background: rgba(255, 107, 53, 0.1); color: var(--accent); }
+        .nav-icon { font-size: 22px; margin-bottom: 2px; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .interstitial-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        .interstitial-overlay.show { display: flex; }
+        .interstitial-content {
+            background: white; border-radius: 20px; padding: 24px;
+            width: 100%; max-width: 360px; text-align: center;
+            position: relative; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(60px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .video-placeholder {
+            width: 100%; height: 200px;
+            background: linear-gradient(135deg, #1e3a5f, #ff6b35);
+            border-radius: 14px; margin-bottom: 16px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; color: white; position: relative;
+            overflow: hidden;
+        }
+        .countdown-circle {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: 800;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .toast {
+            position: fixed; top: 100px; left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #1e3a5f, #2b5278);
+            color: white; padding: 14px 24px; border-radius: 14px;
+            font-size: 14px; font-weight: 600; z-index: 2000;
+            opacity: 0; transition: all 0.3s; pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2); max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { background: linear-gradient(135deg, #059669, #10b981); }
+        .toast.warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1500; padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-content {
+            background: white; border-radius: 20px; padding: 24px;
+            width: 100%; max-width: 340px; text-align: center;
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-emoji { font-size: 64px; margin-bottom: 12px; }
+        .referral-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(43, 82, 120, 0.08));
+            border: 2px dashed rgba(139, 92, 246, 0.3);
+            border-radius: 14px; padding: 20px; text-align: center;
+        }
+        .referral-code {
+            font-family: 'Courier New', monospace; font-size: 22px;
+            font-weight: 800; color: var(--purple); background: white;
+            padding: 14px; border-radius: 12px; margin: 14px 0;
+            letter-spacing: 3px; border: 2px solid rgba(139, 92, 246, 0.2);
+        }
+        .section-title {
+            font-size: 17px; font-weight: 800; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+        .stat-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; margin-top: 12px;
+        }
+        .stat-item-mini {
+            text-align: center; padding: 10px 6px;
+            background: rgba(255,255,255,0.12); border-radius: 10px;
+        }
+        .stat-value-mini { font-size: 18px; font-weight: 800; }
+        .stat-label-mini { font-size: 9px; opacity: 0.8; margin-top: 2px; }
+        .leaderboard-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border-radius: 12px; margin-bottom: 6px;
+        }
+        .leaderboard-item:nth-child(1) { background: linear-gradient(90deg, rgba(251, 191, 36, 0.15), transparent); }
+        .leaderboard-item:nth-child(2) { background: linear-gradient(90deg, rgba(148, 163, 184, 0.15), transparent); }
+        .leaderboard-item:nth-child(3) { background: linear-gradient(90deg, rgba(217, 119, 6, 0.12), transparent); }
+        .rank-badge {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px; flex-shrink: 0;
+        }
+        .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #78350f; }
+        .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: white; }
+        .rank-3 { background: linear-gradient(135deg, #d97706, #b45309); color: white; }
+        .rank-other { background: var(--border); color: var(--text-muted); }
+        .lb-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 15px;
+        }
+        .lb-info { flex: 1; }
+        .lb-name { font-weight: 700; font-size: 14px; }
+        .lb-points { font-size: 12px; color: var(--text-muted); }
+        .lb-score { font-weight: 800; color: var(--accent); }
+        .achievement-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        }
+        .achievement {
+            text-align: center; padding: 12px 6px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .achievement.unlocked {
+            border-color: var(--gold);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.05));
+        }
+        .achievement-icon { font-size: 28px; margin-bottom: 4px; opacity: 0.4; }
+        .achievement.unlocked .achievement-icon { opacity: 1; }
+        .achievement-name { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+        .achievement.unlocked .achievement-name { color: var(--text); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast"></div>
+    <div class="app-header">
+        <div class="header-top">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-weight:700;font-size:15px;" id="userName">Andi</div>
+                    <div style="font-size:11px;opacity:0.8;">
+                        <span id="userLevel">Level 2</span> • <span id="streakCount">🔥 5 hari</span>
+                    </div>
+                </div>
+            </div>
+            <div class="balance-display"><span>💎</span><span id="balanceDisplay">125</span></div>
+        </div>
+        <div class="streak-bar">
+            <div class="streak-day claimed"><div class="streak-icon">✓</div><div>Sen</div></div>
+            <div class="streak-day claimed"><div class="streak-icon">✓</div><div>Sel</div></div>
+            <div class="streak-day claimed"><div class="streak-icon">✓</div><div>Rab</div></div>
+            <div class="streak-day claimed"><div class="streak-icon">✓</div><div>Kam</div></div>
+            <div class="streak-day claimed"><div class="streak-icon">✓</div><div>Jum</div></div>
+            <div class="streak-day active"><div class="streak-icon">🎁</div><div>Sab</div></div>
+            <div class="streak-day"><div class="streak-icon">❓</div><div>Min</div></div>
+        </div>
+    </div>
+
+    <!-- SCREEN: BERANDA -->
+    <div id="screen-home" class="screen active">
+        <div class="container">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span style="font-size:13px;font-weight:700;">Level <span id="levelNum">2</span></span>
+                    <span style="font-size:12px;color:var(--text-muted);"><span id="levelProgress">125</span>/200 XP</span>
+                </div>
+                <div class="level-bar"><div class="level-fill" id="levelFill" style="width:62%;"></div></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+                    75 XP lagi menuju <strong>Level 3</strong> 🚀
+                </div>
+            </div>
+
+            <!-- IKLAN BANNER #1 - Above the fold -->
+            <div class="ad-banner-top" onclick="handleBannerAd('top')">
+                <span class="ad-label" style="position:absolute;top:8px;right:8px;">IKLAN</span>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">🎯 Penawaran Eksklusif Hari Ini</div>
+                <div style="font-size:18px;font-weight:800;color:var(--accent);margin-bottom:8px;">Dapatkan Bonus 50 Poin!</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Klik sekarang & klaim hadiah spesial</div>
+                <span class="reward-tag">+50 💎</span>
+                <div class="ad-note"><strong>Slot Banner #1:</strong> Pasang kode Banner Ad dari AdsGram di sini. CTR tertinggi.</div>
+            </div>
+
+            <div class="section-title">⚡ Aksi Cepat</div>
+            <div class="quick-grid">
+                <div class="quick-action" onclick="showSpinWheel()">
+                    <div class="quick-icon">🎡</div>
+                    <div class="quick-title">Putar Roda</div>
+                    <div class="quick-reward">+10-100 poin</div>
+                </div>
+                <div class="quick-action" onclick="showMysteryBox()">
+                    <div class="quick-icon">🎁</div>
+                    <div class="quick-title">Kotak Misteri</div>
+                    <div class="quick-reward">+25-200 poin</div>
+                </div>
+                <div class="quick-action" onclick="showInterstitial('quick')">
+                    <div class="quick-icon">🎬</div>
+                    <div class="quick-title">Tonton Video</div>
+                    <div class="quick-reward">+25 poin</div>
+                </div>
+                <div class="quick-action" onclick="handleOfferWall()">
+                    <div class="quick-icon">📱</div>
+                    <div class="quick-title">Install App</div>
+                    <div class="quick-reward">+50-500 poin</div>
+                </div>
+            </div>
+
+            <!-- NATIVE AD #1 -->
+            <div class="native-ad" onclick="handleNativeAdClick(1)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                    <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#ff6b35,#f7931e);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:800;">📱</div>
+                    <div style="flex:1;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                            <strong style="font-size:15px;">Aplikasi Produktivitas #1</strong>
+                            <span class="ad-label">Sponsored</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-muted);">⭐⭐⭐⭐⭐ 4.9 • 10M+ Download</div>
+                    </div>
+                </div>
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">
+                    Atur jadwal, catat ide, dan tingkatkan fokus harian Anda. <strong>Gratis selamanya!</strong>
+                </p>
+                <button class="btn btn-accent btn-small" style="width:auto;padding:10px 20px;">📥 Install Gratis →</button>
+                <div class="ad-note"><strong>Slot Native Ad #1:</strong> CTR 2x lebih tinggi dari banner.</div>
+            </div>
+
+            <div class="section-title">📋 Tugas Harian</div>
+            <div class="card" style="padding:14px;"><div id="dailyTasks"></div></div>
+
+            <!-- NATIVE AD #2 -->
+            <div class="native-ad" onclick="handleNativeAdClick(2)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                    <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;">🎮</div>
+                    <div style="flex:1;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                            <strong style="font-size:15px;">Game Penghasil Uang</strong>
+                            <span class="ad-label">Sponsored</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-muted);">Main game & dapatkan reward nyata!</div>
+                    </div>
+                </div>
+                <button class="btn btn-outline btn-small" style="width:auto;padding:10px 20px;">🎮 Main Sekarang</button>
+            </div>
+
+            <div class="card-gradient">
+                <div style="font-size:13px;opacity:0.85;margin-bottom:4px;">📊 Statistik Anda</div>
+                <div class="stat-grid">
+                    <div class="stat-item-mini"><div class="stat-value-mini" id="statAds">23</div><div class="stat-label-mini">Iklan</div></div>
+                    <div class="stat-item-mini"><div class="stat-value-mini" id="statSpin">7</div><div class="stat-label-mini">Spin</div></div>
+                    <div class="stat-item-mini"><div class="stat-value-mini" id="statRef">3</div><div class="stat-label-mini">Ref</div></div>
+                    <div class="stat-item-mini"><div class="stat-value-mini" id="statEarn">$0.45</div><div class="stat-label-mini">Estimasi</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: EARN -->
+    <div id="screen-earn" class="screen">
+        <div class="container">
+            <div class="card-orange" style="text-align:center;">
+                <div style="font-size:14px;opacity:0.9;margin-bottom:4px;">💰 Pilih Cara Mendapatkan Poin</div>
+                <div style="font-size:24px;font-weight:800;">Maksimalkan Penghasilan!</div>
+            </div>
+
+            <div class="section-title">🔥 Penghasilan Tertinggi</div>
+            <div class="earn-item" onclick="showInterstitial('rewarded')">
+                <div class="earn-icon orange">🎬</div>
+                <div class="earn-info">
+                    <div class="earn-title">Tonton Video Rewarded</div>
+                    <div class="earn-desc">Video 15-30 detik • Reward instan</div>
+                </div>
+                <span class="reward-tag hot">+25 💎</span>
+            </div>
+            <div class="earn-item" onclick="handleOfferWall()">
+                <div class="earn-icon purple">🎁</div>
+                <div class="earn-info">
+                    <div class="earn-title">Offer Wall - Tugas Berbayar</div>
+                    <div class="earn-desc">Install app, daftar, survey • Bayaran tertinggi</div>
+                </div>
+                <span class="reward-tag hot">+50-500 💎</span>
+            </div>
+            <div class="earn-item" onclick="showInterstitial('manual')">
+                <div class="earn-icon red">📺</div>
+                <div class="earn-info">
+                    <div class="earn-title">Tonton Iklan Interstitial</div>
+                    <div class="earn-desc">Fullscreen ad • eCPM tinggi</div>
+                </div>
+                <span class="reward-tag">+15 💎</span>
+            </div>
+
+            <div class="section-title">⚡ Tugas Cepat</div>
+            <div class="earn-item" onclick="handleQuiz()">
+                <div class="earn-icon blue">❓</div>
+                <div class="earn-info">
+                    <div class="earn-title">Ikuti Kuis Singkat</div>
+                    <div class="earn-desc">Jawab 5 pertanyaan mudah</div>
+                </div>
+                <span class="reward-tag">+15 💎</span>
+            </div>
+            <div class="earn-item" onclick="handleSurvey()">
+                <div class="earn-icon green">📋</div>
+                <div class="earn-info">
+                    <div class="earn-title">Isi Survey Singkat</div>
+                    <div class="earn-desc">Bagikan pendapat Anda</div>
+                </div>
+                <span class="reward-tag">+35 💎</span>
+            </div>
+            <div class="earn-item" onclick="showSpinWheel()">
+                <div class="earn-icon gold">🎡</div>
+                <div class="earn-info">
+                    <div class="earn-title">Putar Roda Keberuntungan</div>
+                    <div class="earn-desc">1x gratis setiap hari</div>
+                </div>
+                <span class="reward-tag">+10-100 💎</span>
+            </div>
+            <div class="earn-item" onclick="showMysteryBox()">
+                <div class="earn-icon purple">🎁</div>
+                <div class="earn-info">
+                    <div class="earn-title">Buka Kotak Misteri</div>
+                    <div class="earn-desc">Perlu tonton iklan untuk membuka</div>
+                </div>
+                <span class="reward-tag">+25-200 💎</span>
+            </div>
+
+            <div class="section-title">📱 Penawaran Khusus</div>
+            <div class="native-ad" onclick="handleNativeAdClick(3)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                    <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;">💳</div>
+                    <div style="flex:1;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                            <strong style="font-size:15px;">Daftar Kartu Kredit</strong>
+                            <span class="ad-label">Sponsored</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-muted);">Bonus selamat datang 500 poin!</div>
+                    </div>
+                </div>
+                <button class="btn btn-success btn-small" style="width:auto;padding:10px 20px;">Daftar Sekarang →</button>
+            </div>
+
+            <div class="section-title">👥 Ajak Teman</div>
+            <div class="referral-box">
+                <div style="font-size:14px;font-weight:700;color:var(--purple);">Dapatkan 20% komisi SELAMANYA dari setiap teman!</div>
+                <div class="referral-code" id="referralCode">KONTEN123</div>
+                <button class="btn btn-outline btn-small" onclick="copyReferral()">📋 Salin Kode Referral</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: LEADERBOARD -->
+    <div id="screen-leaderboard" class="screen">
+        <div class="container">
+            <div class="card-gold" style="text-align:center;">
+                <div style="font-size:40px;margin-bottom:8px;">🏆</div>
+                <div style="font-size:20px;font-weight:800;">Papan Peringkat</div>
+                <div style="font-size:13px;opacity:0.85;margin-top:4px;">Top earner minggu ini</div>
+            </div>
+            <div class="ad-banner-top" onclick="handleBannerAd('leaderboard')" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(59,130,246,0.08));border-color:rgba(16,185,129,0.3);">
+                <span class="ad-label" style="position:absolute;top:8px;right:8px;background:rgba(16,185,129,0.15);color:#059669;">IKLAN</span>
+                <div style="font-size:16px;font-weight:800;color:#059669;margin-bottom:6px;">💎 Kuasai Peringkat 1!</div>
+                <div style="font-size:12px;color:var(--text-muted);">Tonton iklan untuk tambah poin & naik peringkat</div>
+            </div>
+            <div class="card" style="padding:14px;">
+                <div class="leaderboard-item">
+                    <div class="rank-badge rank-1">1</div>
+                    <div class="lb-avatar" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);">R</div>
+                    <div class="lb-info"><div class="lb-name">RizkiMaster</div><div class="lb-points">152 iklan dilihat</div></div>
+                    <div class="lb-score">2,847 💎</div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank-badge rank-2">2</div>
+                    <div class="lb-avatar" style="background:linear-gradient(135deg,#94a3b8,#64748b);">D</div>
+                    <div class="lb-info"><div class="lb-name">DewiCuan</div><div class="lb-points">118 iklan dilihat</div></div>
+                    <div class="lb-score">2,156 💎</div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank-badge rank-3">3</div>
+                    <div class="lb-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">B</div>
+                    <div class="lb-info"><div class="lb-name">BudiSakti</div><div class="lb-points">98 iklan dilihat</div></div>
+                    <div class="lb-score">1,823 💎</div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank-badge rank-other">4</div>
+                    <div class="lb-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">M</div>
+                    <div class="lb-info"><div class="lb-name">MayaQueen</div><div class="lb-points">87 iklan dilihat</div></div>
+                    <div class="lb-score">1,542 💎</div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank-badge rank-other">5</div>
+                    <div class="lb-avatar" style="background:linear-gradient(135deg,#3b82f6,#2563eb);">A</div>
+                    <div class="lb-info"><div class="lb-name">Andi (Anda)</div><div class="lb-points">23 iklan dilihat</div></div>
+                    <div class="lb-score" style="color:var(--primary);">125 💎</div>
+                </div>
+            </div>
+            <div style="text-align:center;padding:16px;">
+                <button class="btn btn-accent" onclick="switchScreen('earn')">🚀 Tambah Poin Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: PROFIL -->
+    <div id="screen-profile" class="screen">
+        <div class="container">
+            <div class="card" style="text-align:center;padding:24px;">
+                <div style="width:80px;height:80px;border-radius:50%;background:var(--accent-gradient);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:white;font-size:32px;font-weight:800;border:4px solid rgba(255,107,53,0.2);">A</div>
+                <div style="font-size:20px;font-weight:800;" id="profileName">Andi</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">Member sejak 10 Sep 2026</div>
+                <div style="display:inline-block;margin-top:10px;padding:6px 16px;border-radius:20px;background:var(--accent-gradient);color:white;font-size:12px;font-weight:700;">⭐ Level 2 Member</div>
+            </div>
+            <div class="section-title">🏅 Pencapaian</div>
+            <div class="card">
+                <div class="achievement-grid">
+                    <div class="achievement unlocked"><div class="achievement-icon">🚀</div><div class="achievement-name">First Start</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon">👁️</div><div class="achievement-name">Ad Watcher</div></div>
+                    <div class="achievement unlocked"><div class="achievement-icon">🔥</div><div class="achievement-name">5 Day Streak</div></div>
+                    <div class="achievement"><div class="achievement-icon">🎯</div><div class="achievement-name">50 Ads</div></div>
+                    <div class="achievement"><div class="achievement-icon">👥</div><div class="achievement-name">Inviter</div></div>
+                    <div class="achievement"><div class="achievement-icon">💎</div><div class="achievement-name">1K Points</div></div>
+                </div>
+            </div>
+            <div class="section-title">📊 Statistik Lengkap</div>
+            <div class="card" style="padding:16px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="padding:14px;background:rgba(255,107,53,0.06);border-radius:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:var(--accent);" id="totalPoints">125</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Total Poin</div>
+                    </div>
+                    <div style="padding:14px;background:rgba(43,82,120,0.06);border-radius:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:var(--primary);" id="totalAds">23</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Iklan Dilihat</div>
+                    </div>
+                    <div style="padding:14px;background:rgba(16,185,129,0.06);border-radius:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:var(--success);" id="totalRef">3</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Teman Diundang</div>
+                    </div>
+                    <div style="padding:14px;background:rgba(139,92,246,0.06);border-radius:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:800;color:var(--purple);" id="totalEarn">$0.45</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Estimasi $</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-gold" style="text-align:center;">
+                <div style="font-size:32px;margin-bottom:8px;">⭐</div>
+                <h3 style="font-size:18px;font-weight:800;margin-bottom:4px;">Upgrade ke PRO</h3>
+                <p style="font-size:13px;opacity:0.85;margin-bottom:14px;">Bebas iklan + Bonus poin 2x lipat!</p>
+                <button class="btn" style="background:#78350f;color:#fbbf24;font-weight:800;" onclick="handlePremiumPurchase()">⭐ Beli dengan 50 Stars</button>
+            </div>
+            <div class="section-title">⚙️ Pengaturan</div>
+            <div class="card" style="padding:0;">
+                <div style="display:flex;align-items:center;padding:16px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showToast('Notifikasi diaktifkan')">
+                    <span style="font-size:20px;margin-right:12px;">🔔</span>
+                    <span style="flex:1;font-size:14px;font-weight:600;">Notifikasi Harian</span>
+                    <span style="color:var(--text-muted);">→</span>
+                </div>
+                <div style="display:flex;align-items:center;padding:16px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showToast('Bahasa: Indonesia')">
+                    <span style="font-size:20px;margin-right:12px;">🌐</span>
+                    <span style="flex:1;font-size:14px;font-weight:600;">Bahasa</span>
+                    <span style="color:var(--text-muted);font-size:13px;">Indonesia →</span>
+                </div>
+                <div style="display:flex;align-items:center;padding:16px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showToast('Pusat bantuan')">
+                    <span style="font-size:20px;margin-right:12px;">❓</span>
+                    <span style="flex:1;font-size:14px;font-weight:600;">Bantuan</span>
+                    <span style="color:var(--text-muted);">→</span>
+                </div>
+                <div style="display:flex;align-items:center;padding:16px;cursor:pointer;" onclick="showToast('KontenBot Pro v2.0')">
+                    <span style="font-size:20px;margin-right:12px;">ℹ️</span>
+                    <span style="flex:1;font-size:14px;font-weight:600;">Tentang</span>
+                    <span style="color:var(--text-muted);font-size:13px;">v2.0 →</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchScreen('home', this)"><div class="nav-icon">🏠</div><div>Beranda</div></div>
+        <div class="nav-item" onclick="switchScreen('earn', this)"><div class="nav-icon">💰</div><div>Earn</div></div>
+        <div class="nav-item" onclick="switchScreen('leaderboard', this)"><div class="nav-icon">🏆</div><div>Rank</div></div>
+        <div class="nav-item" onclick="switchScreen('profile', this)"><div class="nav-icon">👤</div><div>Profil</div></div>
+    </div>
+
+    <!-- MODAL: SPIN WHEEL -->
+    <div id="spinModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="font-size:18px;font-weight:800;margin-bottom:4px;">🎡 Putar Roda Keberuntungan!</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Tonton iklan singkat untuk 1x putaran gratis</p>
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div class="wheel" id="wheel"></div>
+            </div>
+            <button class="btn btn-accent" id="spinBtn" onclick="startSpin()">🎬 Tonton Iklan & Putar</button>
+            <button class="btn btn-outline btn-small" style="margin-top:10px;" onclick="closeModal('spinModal')">Kembali</button>
+        </div>
+    </div>
+
+    <!-- MODAL: MYSTERY BOX -->
+    <div id="boxModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="font-size:18px;font-weight:800;margin-bottom:4px;">🎁 Kotak Misteri</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Tonton iklan untuk membuka hadiah!</p>
+            <div class="mystery-box" id="mysteryBox" onclick="shakeBox()">
+                <div class="box-lid"></div>
+                <div class="box-body"><div class="box-ribbon"></div><div class="box-bow"></div></div>
+            </div>
+            <button class="btn btn-accent" onclick="openMysteryBox()">🎬 Tonton Iklan & Buka</button>
+            <button class="btn btn-outline btn-small" style="margin-top:10px;" onclick="closeModal('boxModal')">Kembali</button>
+        </div>
+    </div>
+
+    <!-- INTERSTITIAL AD OVERLAY -->
+    <div id="interstitialOverlay" class="interstitial-overlay">
+        <div class="interstitial-content">
+            <button class="btn btn-small btn-outline" style="position:absolute;top:12px;right:12px;width:auto;padding:6px 12px;border-radius:20px;font-size:12px;" onclick="hideInterstitial()">✕ Lewati</button>
+            <span class="ad-label" style="margin-bottom:12px;display:inline-block;">IKLAN</span>
+            <div class="video-placeholder">
+                <div class="countdown-circle" id="countdownCircle">15</div>
+                <div style="margin-top:12px;font-size:13px;font-weight:600;">Video Iklan Bermain...</div>
+            </div>
+            <h4 style="font-size:17px;font-weight:800;margin-bottom:6px;">🎁 Tawaran Spesial!</h4>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Download aplikasi ini dan dapatkan bonus ekstra poin!</p>
+            <button class="btn btn-accent" id="claimInterstitialBtn" disabled style="opacity:0.5;cursor:not-allowed;" onclick="claimInterstitialReward()">🎁 Klaim +25 Poin</button>
+            <div class="ad-note" style="text-align:left;"><strong>Slot Interstitial Ad:</strong> Pasang kode dari AdsGram/RichAds di sini. eCPM $3-6.</div>
+        </div>
+    </div>
+
+    <!-- REWARD MODAL -->
+    <div id="rewardModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-emoji" id="rewardEmoji">🎉</div>
+            <h3 style="font-size:20px;font-weight:800;margin-bottom:4px;" id="rewardTitle">Selamat!</h3>
+            <div style="font-size:36px;font-weight:800;color:var(--accent);margin:12px 0;" id="rewardAmount">+25 💎</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;" id="rewardMessage">Poin telah ditambahkan ke saldo Anda</p>
+            <button class="btn btn-accent" onclick="closeModal('rewardModal')">Oke, Siap!</button>
+        </div>
+    </div>
+
+    <script>
+        // FUNGSI: Ambil parameter dari URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                user_id: params.get('user_id'),
+                first_name: params.get('first_name'),
+                last_name: params.get('last_name'),
+                username: params.get('username'),
+                language_code: params.get('language_code')
+            };
+        }
+
+        let tg = window.Telegram?.WebApp;
+        const urlParams = getUrlParams();
+        
+        // Prioritas: Data dari URL (dikirim bot) → Data dari Telegram SDK → Default
+        let userData = {
+            first_name: 'Pengguna',
+            id: null
+        };
+        
+        // Cek dari URL parameter dulu (paling andal)
+        if (urlParams.first_name) {
+            userData.first_name = urlParams.first_name;
+            userData.id = urlParams.user_id;
+            userData.username = urlParams.username;
+        }
+        // Fallback ke Telegram SDK
+        else if (tg) {
+            tg.ready(); tg.expand();
+            const tgUser = tg.initDataUnsafe?.user;
+            if (tgUser) {
+                userData.first_name = tgUser.first_name || 'Pengguna';
+                userData.id = tgUser.id;
+                userData.username = tgUser.username;
+            }
+        }
+        
+        // Pastikan tg siap
+        if (tg && !urlParams.first_name) {
+            tg.ready(); tg.expand();
+        }
+        
+        // Terapkan data user ke tampilan
+        const displayName = userData.first_name || 'Pengguna';
+        const initial = displayName.charAt(0).toUpperCase();
+        const userIdStr = userData.id ? userData.id.toString() : '0000';
+        
+        document.getElementById('userAvatar').textContent = initial;
+        document.getElementById('userName').textContent = displayName;
+        document.getElementById('profileName').textContent = displayName;
+        document.getElementById('referralCode').textContent = 'KONTEN' + userIdStr.slice(-4);
+
+        let state = {
+            balance: 125, level: 2, xp: 125, xpToNext: 200,
+            adsWatched: 23, spins: 7, referrals: 3, streak: 5,
+            dailyTasks: [
+                { id: 1, name: 'Buka Mini App hari ini', reward: 5, done: true, icon: '📱' },
+                { id: 2, name: 'Lihat 1 iklan banner', reward: 10, done: true, icon: '🏷️' },
+                { id: 3, name: 'Putar roda keberuntungan', reward: 15, done: false, icon: '🎡' },
+                { id: 4, name: 'Tonton video iklan', reward: 25, done: false, icon: '🎬' },
+                { id: 5, name: 'Ajak 1 teman bergabung', reward: 50, done: false, icon: '👥' }
+            ]
+        };
+
+        const saved = localStorage.getItem('kontenbot_v2_state');
+        if (saved) state = { ...state, ...JSON.parse(saved) };
+        
+        function saveState() { localStorage.setItem('kontenbot_v2_state', JSON.stringify(state)); }
+
+        function updateDisplay() {
+            document.getElementById('balanceDisplay').textContent = state.balance;
+            document.getElementById('totalPoints').textContent = state.balance;
+            document.getElementById('totalAds').textContent = state.adsWatched;
+            document.getElementById('statAds').textContent = state.adsWatched;
+            document.getElementById('statSpin').textContent = state.spins;
+            document.getElementById('statRef').textContent = state.referrals;
+            document.getElementById('levelNum').textContent = state.level;
+            document.getElementById('userLevel').textContent = 'Level ' + state.level;
+            document.getElementById('streakCount').textContent = '🔥 ' + state.streak + ' hari';
+            document.getElementById('levelProgress').textContent = state.xp;
+            document.getElementById('levelFill').style.width = Math.min(100, (state.xp / state.xpToNext) * 100) + '%';
+            const estEarn = (state.balance * 0.0015).toFixed(2);
+            document.getElementById('statEarn').textContent = '$' + estEarn;
+            document.getElementById('totalEarn').textContent = '$' + estEarn;
+            renderDailyTasks();
+        }
+
+        function renderDailyTasks() {
+            document.getElementById('dailyTasks').innerHTML = state.dailyTasks.map(task => `
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${task.done ? 'opacity:0.6;' : ''}">
+                    <span style="font-size:20px;">${task.icon}</span>
+                    <span style="flex:1;font-size:13px;${task.done ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${task.name}</span>
+                    <span class="reward-tag" style="font-size:11px;padding:4px 10px;">+${task.reward} 💎</span>
+                    ${task.done ? '<span style="color:var(--success);font-weight:700;">✓</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function switchScreen(screenName, el) {
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
+            document.getElementById('screen-' + screenName).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+
+        function addPoints(points, source = '') {
+            state.balance += points;
+            state.xp += Math.floor(points / 2);
+            state.adsWatched++;
+            while (state.xp >= state.xpToNext) {
+                state.xp -= state.xpToNext;
+                state.level++;
+                state.xpToNext = Math.floor(state.xpToNext * 1.5);
+                showToast(`🎉 LEVEL UP! Sekarang Level ${state.level}!`, 'success');
+            }
+            if (source === 'banner' || source === 'native') {
+                const t = state.dailyTasks.find(t => t.id === 2 && !t.done);
+                if (t) t.done = true;
+            }
+            if (source === 'interstitial' || source === 'video') {
+                const t = state.dailyTasks.find(t => t.id === 4 && !t.done);
+                if (t) t.done = true;
+            }
+            saveState(); updateDisplay();
+        }
+
+        function showReward(points, emoji = '🎉', title = 'Selamat!', message = 'Poin telah ditambahkan') {
+            document.getElementById('rewardEmoji').textContent = emoji;
+            document.getElementById('rewardTitle').textContent = title;
+            document.getElementById('rewardAmount').textContent = '+' + points + ' 💎';
+            document.getElementById('rewardMessage').textContent = message;
+            document.getElementById('rewardModal').classList.add('show');
+        }
+
+        let countdownInterval;
+        
+        function handleBannerAd(location) {
+            addPoints(10, 'banner');
+            showReward(10, '🏷️', 'Iklan Dilihat!', '+10 poin dari banner ad');
+        }
+
+        function handleNativeAdClick(num) {
+            addPoints(15, 'native');
+            showReward(15, '📰', 'Native Ad Diklik!', '+15 poin telah ditambahkan');
+        }
+
+        function handleOfferWall() {
+            showToast('🎁 Membuka Offer Wall...', 'warning');
+            setTimeout(() => { addPoints(50, 'offer'); showReward(50, '🎁', 'Offer Selesai!', '+50 poin dari penawaran khusus'); }, 1500);
+        }
+
+        function handleQuiz() {
+            showToast('❓ Kuis akan segera dimulai!');
+            setTimeout(() => { addPoints(15, 'quiz'); showReward(15, '❓', 'Kuis Selesai!', 'Jawaban benar! +15 poin'); }, 1000);
+        }
+
+        function handleSurvey() {
+            showToast('📋 Membuka survey...', 'warning');
+            setTimeout(() => { addPoints(35, 'survey'); showReward(35, '📋', 'Survey Selesai!', 'Terima kasih! +35 poin'); }, 1500);
+        }
+
+        function showInterstitial(type) {
+            const overlay = document.getElementById('interstitialOverlay');
+            overlay.classList.add('show');
+            const claimBtn = document.getElementById('claimInterstitialBtn');
+            claimBtn.disabled = true; claimBtn.style.opacity = '0.5'; claimBtn.style.cursor = 'not-allowed';
+            let seconds = 15;
+            const circle = document.getElementById('countdownCircle');
+            circle.textContent = seconds;
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                seconds--; circle.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    circle.textContent = '✓';
+                    claimBtn.disabled = false; claimBtn.style.opacity = '1'; claimBtn.style.cursor = 'pointer';
+                }
+            }, 1000);
+        }
+
+        function hideInterstitial() {
+            document.getElementById('interstitialOverlay').classList.remove('show');
+            clearInterval(countdownInterval);
+        }
+
+        function claimInterstitialReward() {
+            hideInterstitial();
+            addPoints(25, 'interstitial');
+            showReward(25, '🎬', 'Video Selesai!', '+25 poin dari rewarded video');
+        }
+
+        const wheelRewards = [
+            { points: 10, color: '#ff6b35', label: '+10' },
+            { points: 20, color: '#fbbf24', label: '+20' },
+            { points: 15, color: '#10b981', label: '+15' },
+            { points: 50, color: '#3b82f6', label: '+50' },
+            { points: 5, color: '#8b5cf6', label: '+5' },
+            { points: 30, color: '#ec4899', label: '+30' },
+            { points: 100, color: '#f59e0b', label: '+100' },
+            { points: 25, color: '#ef4444', label: '+25' }
+        ];
+
+        function initWheel() {
+            const wheel = document.getElementById('wheel');
+            wheelRewards.forEach((r, i) => {
+                const label = document.createElement('div');
+                label.style.cssText = `position:absolute;color:white;font-weight:700;font-size:11px;text-shadow:0 1px 2px rgba(0,0,0,0.3);z-index:1;`;
+                label.textContent = r.label;
+                const angle = (i * 45) + 22.5;
+                const rad = (angle - 90) * Math.PI / 180;
+                label.style.left = (50 + 35 * Math.cos(rad)) + '%';
+                label.style.top = (50 + 35 * Math.sin(rad)) + '%';
+                label.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+                wheel.appendChild(label);
+            });
+        }
+        initWheel();
+
+        function showSpinWheel() { document.getElementById('spinModal').classList.add('show'); }
+
+        function startSpin() {
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true; spinBtn.textContent = '⏳ Memutar...';
+            setTimeout(() => {
+                const wheel = document.getElementById('wheel');
+                const rewardIndex = Math.floor(Math.random() * wheelRewards.length);
+                const reward = wheelRewards[rewardIndex];
+                const totalRotation = 360 * 5 + (360 - (rewardIndex * 45 + 22.5));
+                wheel.style.transform = `rotate(${totalRotation}deg)`;
+                setTimeout(() => {
+                    closeModal('spinModal');
+                    state.spins++;
+                    addPoints(reward.points, 'spin');
+                    const task = state.dailyTasks.find(t => t.id === 3 && !t.done);
+                    if (task) task.done = true;
+                    showReward(reward.points, '🎡', reward.points >= 50 ? 'WOW! Jackpot!' : 'Berhasil Memutar!',
+                        reward.points >= 50 ? 'Jackpot! +' + reward.points + ' poin!' : '+' + reward.points + ' poin');
+                    wheel.style.transform = 'rotate(0deg)';
+                    wheel.style.transition = 'none';
+                    setTimeout(() => {
+                        wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+                        spinBtn.disabled = false; spinBtn.textContent = '🎬 Tonton Iklan & Putar';
+                    }, 100);
+                }, 4200);
+            }, 500);
+        }
+
+        function showMysteryBox() { document.getElementById('boxModal').classList.add('show'); }
+
+        function shakeBox() {
+            const box = document.getElementById('mysteryBox');
+            box.classList.add('shaking');
+            setTimeout(() => box.classList.remove('shaking'), 1500);
+        }
+
+        function openMysteryBox() {
+            showToast('🎬 Menonton iklan...', 'warning');
+            setTimeout(() => {
+                closeModal('boxModal');
+                const rewards = [25, 35, 50, 75, 100, 150, 200];
+                const points = rewards[Math.floor(Math.random() * rewards.length)];
+                addPoints(points, 'mystery');
+                const emoji = points >= 100 ? '💎' : points >= 50 ? '🎁' : '✨';
+                const title = points >= 150 ? 'JACKPOT LUAR BIASA!' : points >= 100 ? 'LUCKY!' : 'Kotak Terbuka!';
+                showReward(points, emoji, title, '+' + points + ' poin dari kotak misteri!');
+            }, 2000);
+        }
+
+        function copyReferral() {
+            navigator.clipboard.writeText(document.getElementById('referralCode').textContent)
+                .then(() => showToast('📋 Kode referral disalin!', 'success'));
+        }
+
+        function handlePremiumPurchase() {
+            if (tg) showToast('⭐ Membuka pembayaran Telegram Stars...');
+            else showToast('⭐ Buka melalui Telegram untuk membeli!', 'warning');
+        }
+
+        function sendToBot(data) { if (tg) tg.sendData(JSON.stringify(data)); }
+
+        updateDisplay();
+        
+        const today = new Date().toDateString();
+        const lastActive = localStorage.getItem('kontenbot_lastactive');
+        if (lastActive !== today) {
+            localStorage.setItem('kontenbot_lastactive', today);
+            state.streak++;
+            addPoints(5, 'daily');
+            setTimeout(() => showToast('🌟 Selamat datang kembali! +5 poin harian', 'success'), 500);
+        }
+
+        sendToBot({ action: 'mini_app_open', balance: state.balance });
+    </script>
+</body>
+</html>
